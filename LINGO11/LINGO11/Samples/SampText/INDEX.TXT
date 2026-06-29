@@ -1,0 +1,145 @@
+The sample LINGO models contained in this directory are from the
+LINGO textkook, "Optimization Modeling with LINGO".  Contact LINDO 
+Systems for information on obtaining a copy of the LINGO text.
+
+Filename    Application
+--------    -----------
+CH01M01.lng A simple product mix problem. The Enginola Problem.
+CH02M01.lng Integer programming with LINGO example. Tom, Dick, and Harry 
+              example.
+CH03M01.lng An example of the Costing Out operation. Enginola adds a video 
+              recorder.
+CH03M02.lng Chapter 3 Problem 4. The Bug product.
+CH04M01.lng The Constructive approach to model formulation example. Including 
+              the ABC's of modeling.
+CH04M02.lng Choosing costs correctly. Sunk and Variable cost example.
+CH04M03.lng Choosing costs correctly. Joint costs example.
+CH04M04.lng Common errors in formulating models. The tinkertoy example.
+CH05M01.lng Primitive set example. The Staffing model in it's entirety.
+CH05M02.lng Dense derived set example. Chess Snackfoods Company nut blending 
+              model.
+CH05M03.lng Sparse derived set example--explicit list.  Wireless Widgets 
+              PERT/CPM model.
+CH05M04.lng Sparse derived set example--membership filter. Coworker matching 
+              problem.
+CH06M01.lng Product mix problem for five products in a plant for someone who 
+              doesn't enjoy arithmetic so much.
+CH06M02.lng Product mix formulation number two for person who enjoys doing 
+              arithmetic.
+CH06M03.lng Process selection in product mix problems (sets version).
+CH07M01.lng Northeast Tollway Staffing problem (sets example).
+CH07M02.lng Cooldot cutting stock example.
+CH07M03.lng Sayre/Priors crew scheduling problem.
+CH07M04.lng Chapter 7 problem 15. R.R. Bean staff scheduling.
+CH08M01.lng Three-level distribution network.
+CH08M02.lng Activity-on-Arc PERT/CPM network. Building a house example.
+CH08M03.lng Value of crashing a project example.
+CH08M04.lng Crashing a project model with PCRASH variable.
+CH08M05.lng Path Formulations shipping example.
+CH08M06.lng Path formulations of undirected networks. Phone company example.
+CH08M07.lng Multi-commodity flow example. New point-to-point shipping service.
+CH08M08.lng Fleet routing with a single plane type example.
+CH08M09.lng Fleet routing with two plane types example.
+CH08M10.lng Fleet routing with two plane types (sets example).
+CH08M11.lng Leontief flow models. Formulation of the Islandia model.
+CH08M12.lng Minimal Spanning Tree example.
+CH08M13.lng Steiner Tree problem.
+CH08M14.lng Nonlinear networks using data from Bracken and McCormick (1968).
+CH08M15.lng Network Equilibrium example.
+CH08M16.lng Chapter 8 problem 16. Long distance phone company (SBG Inc.) 
+              example.
+CH09M01.lng Dynamic product production example.
+CH09M02.lng Multi-period financial model. Cash flow matching.
+CH09M03.lng Multi-period financial model. Cash flow matching (sets version).
+CH09M04.lng Financial planning with Tax considerations. Winston-Salem 
+              Development Management example.
+CH09M05.lng Accounting for Income Taxes example.
+CH09M06.lng Non-optimality of Cyclic solutions to cyclic problems example.
+CH10M01.lng Blending problems. The Pittsburgh Steel blending problem.
+CH10M02.lng Blending problem within a product mix example.
+CH10M03.lng Blending problem within a product mix example (sets version).
+CH10M04.lng Proper choice of alternate interpretations of quality 
+              requirements. Ford Motor company example.
+CH10M05.lng Pooling problems example.
+CH11M01.lng Integer programming methods. Branch-and-bound example.
+CH11M02.lng Naturally integer solutions and the prayer algorithm. A one period 
+              MRP example.
+CH11M03.lng The assignment problem example.
+CH11M04.lng Traveling salesperson example.
+CH11M05.lng Linear ordering problem. Beverage preference example.
+CH11M06.lng Packing financial instruments example.
+CH11M07.lng Bundling of products example. Microland Software.
+CH11M08.lng Simplifying difficult integer programs example. Power to the 
+              People model.
+CH11M09.lng Chapter 11 problem 7 Mastermind game.
+CH12M01.lng Two period planning. The warm winter solution.
+CH12M02.lng Two period planning. The cold winter solution. 
+CH12M03.lng Two period planning. The cold winter solution (sets version).
+CH12M04.lng Two period planning. The unconditional solution.
+CH12M05.lng Decisions under uncertainty with more than two periods. Dynamic 
+              programming and Financial options model.
+CH12M06.lng Binomial tree models of interest rates. Black/Derman/Toy 
+              calibrating example.
+CH12M07.lng Binomial tree models of interest rates. Black/Derman/Toy computing 
+              value of calibration model.
+CH12M08.lng Binomial tree model of foreign exchange rates for option pricing.
+CH12M09.lng Decisions under uncertainty with infinite periods. Cash balance 
+              management.
+CH12M10.lng Decisions under uncertainty with infinite periods. Cash balance 
+              management (sets version).
+CH13M01.lng Markowitz mean/variance portfolio model.
+CH13M02.lng Markowitz mean/variance portfolio model (sets version).
+CH13M03.lng Portfolios with a risk-free asset example.
+CH13M04.lng Portfolios with a risk-free asset example (sets version).
+CH13M05.lng Sharpe ratio example.
+CH13M06.lng Portfolios with transaction costs example.
+CH13M07.lng Portfolios with transaction costs example (sets version).
+CH13M08.lng Portfolios with taxes example.
+CH13M09.lng Factor model example.
+CH13M10.lng Scenario model for representing uncertainty example.
+CH13M11.lng Maximizing the minimum return example.
+CH13M12.lng Semi-variance and downside risk example.
+CH13M13.lng Scenarios based directly upon a covariance matrix example.
+CH13M14.lng Markowitz portfolio hedging model. Benchmark portfolio example.
+CH13M15.lng Markowitz portfolio matching model. Benchmark portfolio example.
+CH13M16.lng Scenario approach to benchmark portfolios.
+CH13M17.lng Scenario model for constructing a portfolio matching the S&P 500. 
+CH13M18.lng Cholesky factorization for quadratic programs example.
+CH14M01.lng Multi-criteria problems. Ad Lib marketing example.
+CH14M02.lng Secondary criterion to choose among alternate optima example.
+CH14M03.lng Preemptive/Lexico goal programming example.
+CH14M04.lng Preemptive/Lexico goal programming distributed example.
+CH14M05.lng Minimizing the maximum example.
+CH14M06.lng Efficient points, more-is-better case. Reading, writing, and 
+              arithmetic example.
+CH14M07.lng Efficient points, less-is-better case. GBS Construction Materials 
+              company.
+CH14M08.lng Data Envelopment Analysis (DEA) highschool example.
+CH14M09.lng Data Envelopment Analysis (DEA) highschool example (sets version).
+CH15M01.lng Simultaneous price/production decision example.
+CH15M02.lng Supply/demand curves example. Maximizing broker revenue.
+CH15M03.lng Supply/demand curves example. Maximizing broker revenue with 
+              shipping costs.
+CH15M04.lng Auctions as economic equilibria example.
+CH15M05.lng Multi-product pricing example.
+CH15M06.lng Transportation equilibria example.
+CH15M07.lng General equilibrium of an economy example.
+CH15M08.lng Economic equilibria in electrical networks example.
+CH16M01.lng Minimax strategy example (Blue).
+CH16M02.lng Minimax strategy example (Gold).
+CH16M03.lng Two person non-constant sum game example (bimatrix game).
+CH17M01.lng Newsboy inventory with Normal distribution example.
+CH17M02.lng Multi-echelon newsboy example.
+CH17M03.lng Newsboy inventory with a holdback fraction.
+CH17M04.lng Safety lotsize / Overbooking example.
+CH17M05.lng Multi-product newsboy inventory example.
+CH17M06.lng Cost analysis of Q,r model.
+CH17M07.lng Base stock example with periodic review and normal demand.
+CH17M08.lng Base stock example with continuous review and Poisson demand.
+CH17M09.lng Multi-Echelon base stock. The METRIC model.
+CH17M10.lng Distribution center with holdback inventory/capacity example.
+CH17M11.lng Two product capacitated lotsizing example.
+CH17M12.lng Multi-product capacitated lotsizing example.
+CH18M01.lng Column generation applied to a cutting stock problem example.
+
+

@@ -1,0 +1,30 @@
+MODEL:
+ SETS:
+    DAYS / MON TUE WED THU FRI SAT SUN/:
+     NEEDS, START, ONDUTY;
+ ENDSETS
+
+ [OBJECTIVE] MIN = @SUM( DAYS( I): START( I));
+
+ @FOR( DAYS( TODAY):
+
+ ! Calculate number on duty;
+    ONDUTY( TODAY) = 
+     @SUM( DAYS( D)| D #LE# 5:
+      START( @WRAP( TODAY - D + 1, @SIZE( DAYS))));
+
+ ! Enforce staffing requirement;
+    ONDUTY( TODAY) >= NEEDS( TODAY);
+
+    @GIN( START);
+ );
+
+ DATA:
+    NEEDS =  @POINTER( 1);
+    @POINTER( 2) = START;
+    @POINTER( 3) = ONDUTY;
+    @POINTER( 4) = OBJECTIVE;
+    @POINTER( 5) = @STATUS();
+ ENDDATA
+END
+ 

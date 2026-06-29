@@ -1,0 +1,44 @@
+MODEL:
+
+SETS:
+   ITEMS: INCLUDE, WEIGHT, RATING;
+ENDSETS
+
+DATA:
+   ITEMS  = @POINTER( 1);
+   WEIGHT = @POINTER( 2);
+   RATING = @POINTER( 3);
+   KNAPSACK_CAPACITY = @POINTER( 4);
+ENDDATA
+
+SUBMODEL SACK:
+   MAX = @SUM( ITEMS: RATING * INCLUDE);
+
+   @SUM( ITEMS: WEIGHT * INCLUDE) <= 
+    KNAPSACK_CAPACITY;
+
+   @FOR( ITEMS: @BIN( INCLUDE));
+ENDSUBMODEL
+
+CALC:
+   !keep output to a minimum;
+   @SET( 'TERSEO', 1);
+   !solve the model;
+   @SOLVE( SACK);
+   !fix the INCLUDE attribute to it's optimal value;
+   @FOR( ITEMS( I): INCLUDE( I) = INCLUDE( I));
+ENDCALC
+
+SETS:
+   !construct a set of the optimal items;
+   ITEMSUSED( ITEMS) | INCLUDE( &1) #GT# .5:;
+ENDSETS
+
+DATA:
+   !send optimal items set back to caller;
+   @POINTER( 5) = ITEMSUSED;
+   !along with the solver status;
+   @POINTER( 6) = @STATUS();
+ENDDATA
+
+END

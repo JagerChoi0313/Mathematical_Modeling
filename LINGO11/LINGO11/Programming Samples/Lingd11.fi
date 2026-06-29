@@ -1,0 +1,190 @@
+!/*****************************************************************************/
+!/*   
+!/*    LINGO Version 11.0
+!/*
+!/*    LINGO DLL definitions header
+!/*
+!/*    Copyright (c) 2004-2008
+!/*
+!/*    LINDO Systems, Inc.            312.988.7422
+!/*    1415 North Dayton St.          info@lindo.com
+!/*    Chicago, IL 60622              http://www.lindo.com
+!/*
+!/*    Last Updated: 8 April 2008
+!/*   
+!/*****************************************************************************/
+ 
+      parameter LSERR_NO_ERROR_LNG                       = 0
+      parameter LSERR_OUT_OF_MEMORY_LNG                  = 1
+      parameter LSERR_UNABLE_TO_OPEN_LOG_FILE_LNG        = 2
+      parameter LSERR_INVALID_NULL_POINTER_LNG           = 3
+      parameter LSERR_INVALID_INPUT_LNG                  = 4
+      parameter LSERR_INFO_NOT_AVAILABLE_LNG             = 5
+
+      parameter LS_IINFO_VARIABLES_LNG                   = 0
+      parameter LS_IINFO_VARIABLES_INTEGER_LNG           = 1
+      parameter LS_IINFO_VARIABLES_NONLINEAR_LNG         = 2
+      parameter LS_IINFO_CONSTRAINTS_LNG                 = 3
+      parameter LS_IINFO_CONSTRAINTS_NONLINEAR_LNG       = 4
+      parameter LS_IINFO_NONZEROS_LNG                    = 5
+      parameter LS_IINFO_NONZEROS_NONLINEAR_LNG          = 6
+      parameter LS_IINFO_ITERATIONS_LNG                  = 7
+      parameter LS_IINFO_BRANCHES_LNG                    = 8
+      parameter LS_DINFO_SUMINF_LNG                      = 9
+      parameter LS_DINFO_OBJECTIVE_LNG                   =10
+      parameter LS_DINFO_MIP_BOUND_LNG                   =11
+      parameter LS_DINFO_MIP_BEST_OBJECTIVE_LNG          =12
+
+      parameter LS_STATUS_GLOBAL_LNG                     = 0
+      parameter LS_STATUS_INFEASIBLE_LNG                 = 1
+      parameter LS_STATUS_UNBOUNDED_LNG                  = 2
+      parameter LS_STATUS_UNDETERMINED_LNG               = 3
+      parameter LS_STATUS_FEASIBLE_LNG                   = 4
+      parameter LS_STATUS_INFORUNB_LNG                   = 5
+      parameter LS_STATUS_LOCAL_LNG                      = 6
+      parameter LS_STATUS_LOCAL_INFEASIBLE_LNG           = 7
+      parameter LS_STATUS_CUTOFF_LNG                     = 8
+      parameter LS_STATUS_NUMERIC_ERROR_LNG              = 9
+	
+      interface
+
+         integer function LSclearPointersLng( pLINGO)
+!ms$ if defined (OS_WIN)
+            !ms$attributes stdcall, alias:'_LSclearPointersLng@4' ::
+     +       LSclearPointersLng
+!ms$ else
+            !ms$attributes stdcall, alias:'LSclearPointersLng' ::
+     +       LSclearPointersLng
+!ms$ endif
+            integer pLINGO                     [VALUE]
+         end function LSclearPointersLng
+
+         integer function LScloseLogFileLng( pLINGO)
+!ms$ if defined (OS_WIN)
+            !ms$attributes stdcall, alias:'_LScloseLogFileLng@4' ::
+     +       LScloseLogFileLng
+!ms$ else
+            !ms$attributes stdcall, alias:'LScloseLogFileLng' ::
+     +       LScloseLogFileLng
+!ms$ endif
+            integer pLINGO                     [VALUE]
+         end function LScloseLogFileLng
+
+         integer function LScreateEnvLng
+!ms$ if defined (OS_WIN)
+            !ms$attributes stdcall, alias:'_LScreateEnvLng@0' ::
+     +       LScreateEnvLng
+!ms$ else
+            !ms$attributes stdcall, alias:'LScreateEnvLng' ::
+     +       LScreateEnvLng
+!ms$ endif
+         end function LScreateEnvLng
+
+         integer function LSdeleteEnvLng( pLINGO)
+!ms$ if defined (OS_WIN)
+            !ms$attributes stdcall, alias:'_LSdeleteEnvLng@4' ::
+     +       LSdeleteEnvLng
+!ms$ else
+            !ms$attributes stdcall, alias:'LSdeleteEnvLng' ::
+     +       LSdeleteEnvLng
+!ms$ endif
+            integer pLINGO                     [VALUE]
+         end function LSdeleteEnvLng
+
+         integer function LSexecuteScriptLng( pLINGO, pcScript)
+!ms$ if defined (OS_WIN)
+            !ms$attributes stdcall, alias:'_LSexecuteScriptLng@8' ::
+     +       LSexecuteScriptLng
+!ms$ else
+            !ms$attributes stdcall, alias:'LSexecuteScriptLng' ::
+     +       LSexecuteScriptLng
+!ms$ endif
+            integer pLINGO                     [VALUE]
+            character pcScript                 [REFERENCE]
+         end function LSexecuteScriptLng
+
+         integer function LSopenLogFileLng( pLINGO, pcLogFile)
+!ms$ if defined (OS_WIN)
+            !ms$attributes stdcall, alias:'_LSopenLogFileLng@8' ::
+     +       LSopenLogFileLng
+!ms$ else
+            !ms$attributes stdcall, alias:'LSopenLogFileLng' ::
+     +       LSopenLogFileLng
+!ms$ endif
+            integer pLINGO                     [VALUE]
+            character pcLogFile                [REFERENCE]
+         end function LSopenLogFileLng
+
+         integer function LSsetCallbackErrorLng( pLINGO, pCallback,
+     +    pMyData)
+!ms$ if defined (OS_WIN)
+            !ms$attributes stdcall, alias:'_LSsetCallbackErrorLng@12' ::
+     +       LSsetCallbackErrorLng
+!ms$ else
+            !ms$attributes stdcall, alias:'LSsetCallbackErrorLng' ::
+     +       LSsetCallbackErrorLng
+!ms$ endif
+            integer pLINGO                     [VALUE]
+            integer pCallback                  [REFERENCE]
+            integer pMyData                    [REFERENCE]
+         end function LSsetCallbackErrorLng
+
+         integer function LSsetCallbackSolverLng( pLINGO, pCallback,
+     +    pMyData)
+!ms$ if defined (OS_WIN)
+          !ms$attributes stdcall, alias:'_LSsetCallbackSolverLng@12' ::
+     +       LSsetCallbackSolverLng
+!ms$ else
+          !ms$attributes stdcall, alias:'LSsetCallbackSolverLng' ::
+     +       LSsetCallbackSolverLng
+!ms$ endif
+            integer pLINGO                     [VALUE]
+            integer pCallback                  [VALUE]
+            integer pMyData                    [REFERENCE]
+         end function LSsetCallbackSolverLng
+
+         integer function LSsetPointerLng( pLINGO, pdPointer, 
+     +    nPointersNow)
+!ms$ if defined (OS_WIN)
+            !ms$attributes stdcall, alias:'_LSsetPointerLng@12' ::
+     +       LSsetPointerLng
+!ms$ else
+            !ms$attributes stdcall, alias:'LSsetPointerLng' ::
+     +       LSsetPointerLng
+!ms$ endif
+            integer pLINGO                     [VALUE]
+            real*8 pdPointer                   [REFERENCE]
+            integer nPointersNow               [REFERENCE]
+         end function LSsetPointerLng
+
+         integer function LSgetCallbackInfoIntLng( pLINGO, nObject, 
+     +    nValue)
+!ms$ if defined (OS_WIN)
+            !ms$attributes stdcall, 
+     +       alias:'_LSgetCallbackInfoLng@12' :: LSgetCallbackInfoIntLng
+!ms$ else
+            !ms$attributes stdcall, 
+     +       alias:'LSgetCallbackInfoLng' :: LSgetCallbackInfoIntLng
+!ms$ endif
+            integer pLINGO                     [VALUE]
+            integer nObject                    [VALUE]
+            integer nValue                     [REFERENCE]
+         end function LSgetCallbackInfoIntLng
+
+         integer function LSgetCallbackInfoDoubleLng( pLINGO, nObject, 
+     +    dValue)
+!ms$ if defined (OS_WIN)
+            !ms$attributes stdcall, 
+     +       alias:'_LSgetCallbackInfoLng@12' :: 
+     +        LSgetCallbackInfoDoubleLng
+!ms$ else
+            !ms$attributes stdcall, 
+     +       alias:'LSgetCallbackInfoLng' :: 
+     +        LSgetCallbackInfoDoubleLng
+!ms$ endif
+            integer pLINGO                     [VALUE]
+            integer nObject                    [VALUE]
+            real*8  dValue                     [REFERENCE]
+         end function LSgetCallbackInfoDoubleLng
+
+      end interface

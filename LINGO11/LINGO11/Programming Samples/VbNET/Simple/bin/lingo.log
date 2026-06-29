@@ -1,0 +1,82 @@
+  LINGO/WIN64 11.0.0.9 (20 FEB 08)
+ 
+  LINDO API 5.0.1.255 (Feb 20 2008 18:41:18)
+ 
+  Copyright (C) 2005-2007 LINDO Systems Inc. Licensed material,
+  all rights reserved. Copying except as authorized in license
+  agreement is prohibited.
+ 
+  License location: C:\LINGO64_11\lndlng11.lic
+ 
+  lindo internal
+ 
+  License expires: 18 Jul 2008
+ 
+  Licensed for commercial use.
+  Branch-and-bound solver enabled.
+  Nonlinear solver enabled.
+  Barrier solver enabled.
+  Global solver enabled.
+ 
+ 
+   Parameter        Old Value     New Value
+    ECHOIN             0             1
+ 
+: take \lingo64_11\programming samples\vbnet\simple\simple.lng
+: model:
+? sets:
+?    computers: profit, limit, labor, produce;
+? endsets
+? data:
+?    ! computers set;
+?    computers = @pointer( 7);
+?    ! profit on a computer;
+?    profit = @pointer( 1);
+?    ! limit on the number of computers that can be produced;
+?    limit = @pointer( 2);
+?    ! labor required for production of a computer;
+?    labor = @pointer( 3);
+? enddata
+?    ! maximize total profit;
+?    [rObj] max = @sum ( computers(i) : profit(i) * produce(i));
+?    ! enforce production limit;
+?    @for (computers(i) : produce(i) <= limit(i));
+?    ! labor constraint;
+?    @sum (computers(i) : labor(i) * produce(i)) <= 160;
+? data:
+?    @pointer(4) = rObj;
+?    @pointer(5) = @status();
+?    @pointer(6) = produce;
+? enddata
+? end
+: go
+  Compiling model ...
+  Structural analysis, pass 1 ...
+  Scalarizing model ...
+  Generating nonzero matrix ...
+  Global optimal solution found.
+  Objective value:                              14500.00
+  Infeasibilities:                              0.000000
+  Total solver iterations:                             2
+ 
+  Running output operations ...
+ 
+  Building solution report ...
+ 
+                       Variable           Value        Reduced Cost
+              PROFIT( STANDARD)        100.0000            0.000000
+                 PROFIT( TURBO)        150.0000            0.000000
+               LIMIT( STANDARD)        100.0000            0.000000
+                  LIMIT( TURBO)        120.0000            0.000000
+               LABOR( STANDARD)        1.000000            0.000000
+                  LABOR( TURBO)        2.000000            0.000000
+             PRODUCE( STANDARD)        100.0000            0.000000
+                PRODUCE( TURBO)        30.00000            0.000000
+ 
+                            Row    Slack or Surplus      Dual Price
+                           ROBJ        14500.00            1.000000
+                              2        0.000000            25.00000
+                              3        90.00000            0.000000
+                              4        0.000000            75.00000
+ 
+: quit

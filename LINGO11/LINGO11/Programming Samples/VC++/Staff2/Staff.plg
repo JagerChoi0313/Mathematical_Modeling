@@ -1,0 +1,27 @@
+<html>
+<body>
+<pre>
+<h1>Build Log</h1>
+<h3>
+--------------------Configuration: staff - Win32 Release--------------------
+</h3>
+<h3>Command Lines</h3>
+Creating temporary file "C:\DOCUME~1\Admin2\LOCALS~1\Temp\RSP42E.tmp" with contents
+[
+/nologo /MD /W3 /GX /O2 /I "..\..\\" /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /D "_AFXDLL" /Fp"Release/staff.pch" /YX /Fo"Release/" /Fd"Release/" /FD /c 
+"C:\junk\VC++\Staff2\staffDlg.cpp"
+]
+Creating command line "cl.exe @C:\DOCUME~1\Admin2\LOCALS~1\Temp\RSP42E.tmp" 
+Creating command line "link.exe /nologo /subsystem:windows /incremental:no /pdb:"Release/staff.pdb" /machine:I386 /out:"Release/staff.exe"  ".\Release\NewIPDlg.obj" ".\Release\staff.obj" ".\Release\staffDlg.obj" ".\Release\StdAfx.obj" ".\Release\staff.res" "..\..\Lingd11.lib" "
+<h3>Output Window</h3>
+Compiling...
+staffDlg.cpp
+Linking...
+
+
+
+<h3>Results</h3>
+staff.exe - 0 error(s), 0 warning(s)
+</pre>
+</body>
+</html>

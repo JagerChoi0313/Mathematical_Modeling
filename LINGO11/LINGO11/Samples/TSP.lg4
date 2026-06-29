@@ -1,0 +1,44 @@
+MODEL:
+ ! Traveling Salesman Problem for the cities of
+ Atlanta, Chicago, Cincinnati, Houston, LA, 
+ Montreal;
+ SETS:
+  CITY / 1.. 6/: U; ! U( I) = sequence no. of city;
+  LINK( CITY, CITY):
+       DIST,  ! The distance matrix;
+          X;  ! X( I, J) = 1 if we use link I, J;
+ ENDSETS
+ DATA:   !Distance matrix, it need not be symmetric;
+  DIST =   0  702  454  842 2396 1196
+         702    0  324 1093 2136  764
+         454  324    0 1137 2180  798
+         842 1093 1137    0 1616 1857
+        2396 2136 2180 1616    0 2900
+        1196  764  798 1857 2900    0;
+ ENDDATA
+
+ !The model:Ref. Desrochers & Laporte, OR Letters,
+  Feb. 91;
+  N = @SIZE( CITY);
+  MIN = @SUM( LINK: DIST * X);
+  @FOR( CITY( K):
+  !  It must be entered;
+   @SUM( CITY( I)| I #NE# K: X( I, K)) = 1;
+  !  It must be departed;
+   @SUM( CITY( J)| J #NE# K: X( K, J)) = 1;
+  ! Weak form of the subtour breaking constraints;
+  ! These are not very powerful for large problems;
+   @FOR( CITY( J)| J #GT# 1 #AND# J #NE# K:
+       U( J) >= U( K) + X ( K, J) -
+       ( N - 2) * ( 1 - X( K, J)) +
+       ( N - 3) * X( J, K)
+   );
+  );
+  ! Make the X's 0/1;
+  @FOR( LINK: @BIN( X));
+  ! For the first and last stop we know...;
+  @FOR( CITY( K)| K #GT# 1:
+   U( K) <= N - 1 - ( N - 2) * X( 1, K);
+   U( K) >= 1  + ( N - 2) * X( K, 1)
+  );
+END

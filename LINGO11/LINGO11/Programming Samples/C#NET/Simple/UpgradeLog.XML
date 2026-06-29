@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?><?xml-stylesheet type='text/xsl' href='_UpgradeReport_Files/UpgradeReport.xslt'?><UpgradeLog>
+<Properties><Property Name="Solution" Value="Simple">
+</Property><Property Name="Solution File" Value="C:\disklng11\Programming Samples\C#NET\Simple\Simple.sln">
+</Property><Property Name="User Options File" Value="C:\disklng11\Programming Samples\C#NET\Simple\Simple.suo">
+</Property><Property Name="Date" Value="Thursday, October 11, 2007">
+</Property><Property Name="Time" Value="16:06 PM">
+</Property></Properties><Event ErrorLevel="0" Project="" Source="Simple.sln" Description="File successfully backed up as C:\disklng11\Programming Samples\C#NET\Simple\Backup\Simple.sln">
+</Event><Event ErrorLevel="0" Project="" Source="Simple.suo" Description="File successfully backed up as C:\disklng11\Programming Samples\C#NET\Simple\Backup\Simple.suo">
+</Event><Event ErrorLevel="0" Project="Simple" Source="Simple.csproj" Description="Project file successfully backed up as C:\disklng11\Programming Samples\C#NET\Simple\Backup\Simple.csproj">
+</Event><Event ErrorLevel="0" Project="Simple" Source="Simple.csproj.user" Description="Project user file successfully backed up as C:\disklng11\Programming Samples\C#NET\Simple\Backup\Simple.csproj.user">
+</Event><Event ErrorLevel="0" Project="Simple" Source="AssemblyInfo.cs" Description="File successfully backed up as C:\disklng11\Programming Samples\C#NET\Simple\Backup\AssemblyInfo.cs">
+</Event><Event ErrorLevel="0" Project="Simple" Source="Class1.cs" Description="File successfully backed up as C:\disklng11\Programming Samples\C#NET\Simple\Backup\Class1.cs">
+</Event><Event ErrorLevel="0" Project="Simple" Source="Lingd10.cs" Description="File successfully backed up as C:\disklng11\Programming Samples\C#NET\Simple\Backup\Lingd10.cs">
+</Event><Event ErrorLevel="0" Project="Simple" Source="App.ico" Description="File successfully backed up as C:\disklng11\Programming Samples\C#NET\Simple\Backup\App.ico">
+</Event><Event ErrorLevel="0" Project="Simple" Source="Simple.csproj" Description="Project converted successfully">
+</Event><Event ErrorLevel="3" Project="Simple" Source="Simple.csproj" Description="Converted">
+</Event><Event ErrorLevel="0" Project="" Source="Simple.sln" Description="Solution converted successfully">
+</Event><Event ErrorLevel="3" Project="" Source="Simple.sln" Description="Converted">
+</Event><Event ErrorLevel="0" Project="Simple" Source="Simple.csproj" Description="Scan complete: Upgrade not required for project files.">
+</Event></UpgradeLog>

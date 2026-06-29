@@ -1,0 +1,10 @@
+bin\x64\Debug\Simple.exe
+bin\x64\Debug\Simple.pdb
+obj\x64\Debug\ResolveAssemblyReference.cache
+obj\x64\Debug\Simple.exe
+obj\x64\Debug\Simple.pdb
+bin\x86\Debug\Simple.exe
+bin\x86\Debug\Simple.pdb
+obj\x86\Debug\ResolveAssemblyReference.cache
+obj\x86\Debug\Simple.exe
+obj\x86\Debug\Simple.pdb

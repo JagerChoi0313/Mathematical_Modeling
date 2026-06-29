@@ -1,0 +1,38 @@
+model:
+
+sets:
+   computers: profit, limit, labor, produce;
+endsets
+
+data:
+   !computers set;
+   computers = @pointer( 7);
+
+   ! profit on a computer;
+   profit = @pointer( 1);
+
+   ! limit on the number of computers that can be produced;
+   limit = @pointer( 2);
+
+   ! labor required for production of a computer;
+   labor = @pointer( 3);
+enddata
+
+   ! maximize total profit;
+   [rObj] max = @sum ( computers(i) : profit(i) * produce(i));
+
+   ! enforce production limit;
+   @for (computers(i) : produce(i) <= limit(i));
+
+   ! labor constraint;
+   @sum (computers(i) : labor(i) * produce(i)) <= 160;
+
+
+data:
+   @pointer(4) = rObj;
+   @pointer(5) = @status();
+   @pointer(6) = produce;
+enddata
+
+end
+

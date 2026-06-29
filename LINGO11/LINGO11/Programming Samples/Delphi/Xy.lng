@@ -1,0 +1,26 @@
+model:
+
+data:
+ cx = @pointer( 1);
+ cy = @pointer( 2);
+ b1 = @pointer( 3);
+ b2 = @pointer( 4);
+ b3 = @pointer( 5);
+ a1 = @pointer( 6);
+ a2 = @pointer( 7);
+enddata
+
+[obj] max = cx * x + cy * y;
+x <= b1;
+y <= b2;
+a1 * x + a2 * y <= b3;
+
+data:
+ @pointer( 8) = x;
+ @pointer( 9) = y;
+ @pointer( 10) = obj;
+ @pointer( 11) = @status();
+enddata
+
+end
+

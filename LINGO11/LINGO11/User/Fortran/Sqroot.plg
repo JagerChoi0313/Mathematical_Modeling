@@ -1,0 +1,27 @@
+<html>
+<body>
+<pre>
+<h1>Build Log</h1>
+<h3>
+--------------------Configuration: SqRoot - Win32 Release--------------------
+</h3>
+<h3>Command Lines</h3>
+Creating temporary file "C:\DOCUME~1\Kevin\LOCALS~1\Temp\RSP125.tmp" with contents
+[
+/compile_only /include:"Release/" /math_library:fast /nologo /threads /module:".\Release/" /object:".\Release/" 
+"C:\disklng9\User\Fortran\sqroot.f90"
+]
+Creating command line "link.exe /nologo /subsystem:windows /dll /incremental:no /pdb:".\Release/Sqroot.pdb" /machine:I386 /out:".\Release/Sqroot.dll" /implib:".\Release/Sqroot.lib"  .\Release\sqroot.obj "
+<h3>Output Window</h3>
+Compiling Fortran...
+C:\disklng9\User\Fortran\sqroot.f90
+Linking...
+   Creating library .\Release/Sqroot.lib and object .\Release/Sqroot.exp
+
+
+
+<h3>Results</h3>
+Sqroot.dll - 0 error(s), 0 warning(s)
+</pre>
+</body>
+</html>

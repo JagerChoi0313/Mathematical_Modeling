@@ -1,0 +1,31 @@
+!MS$FREEFORM
+! Microsoft Developer Studio generated include file.
+! Used by staff.rc
+!
+      integer, parameter :: IDM_ABOUTBOX                    = 16
+      integer, parameter :: IDD_ABOUTBOX                    = 100
+      integer, parameter :: IDS_ABOUTBOX                    = 101
+      integer, parameter :: IDD_STAFF_DIALOG                = 102
+      integer, parameter :: IDR_MAINFRAME                   = 128
+      integer, parameter :: IDC_NEEDS_MON                   = 1000
+      integer, parameter :: IDC_NEEDS_TUE                   = 1001
+      integer, parameter :: IDC_NEEDS_WED                   = 1002
+      integer, parameter :: IDC_NEEDS_THU                   = 1003
+      integer, parameter :: IDC_NEEDS_FRI                   = 1004
+      integer, parameter :: IDC_NEEDS_SAT                   = 1005
+      integer, parameter :: IDC_NEEDS_SUN                   = 1006
+      integer, parameter :: IDC_START_MON                   = 1030
+      integer, parameter :: IDC_START_TUE                   = 1031
+      integer, parameter :: IDC_START_WED                   = 1032
+      integer, parameter :: IDC_START_THU                   = 1033
+      integer, parameter :: IDC_START_FRI                   = 1034
+      integer, parameter :: IDC_START_SAT                   = 1035
+      integer, parameter :: IDC_START_SUN                   = 1036
+      integer, parameter :: IDC_COST                        = 1037
+      integer, parameter :: IDC_ON_MON                      = 1038
+      integer, parameter :: IDC_ON_TUE                      = 1039
+      integer, parameter :: IDC_ON_WED                      = 1040
+      integer, parameter :: IDC_ON_THU                      = 1041
+      integer, parameter :: IDC_ON_FRI                      = 1042
+      integer, parameter :: IDC_ON_SAT                      = 1043
+      integer, parameter :: IDC_ON_SUN                      = 1044

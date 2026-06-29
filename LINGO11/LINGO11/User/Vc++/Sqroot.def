@@ -1,0 +1,7 @@
+; sqroot.def : Declares the module parameters for the DLL.
+
+LIBRARY      "SQROOT"
+DESCRIPTION  'SQROOT Windows Dynamic Link Library'
+
+EXPORTS
+    ; Explicit exports can go here

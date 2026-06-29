@@ -1,0 +1,37 @@
+! Have LINGO echo input to the screen;
+SET ECHOIN 1
+
+! Suppresses the standard solution report;
+SET TERSEO 1
+
+! Begins input of a new model;
+MODEL:
+
+SETS:
+   DAYS: REQUIRED, START;
+ENDSETS
+
+DATA:
+   DAYS = MON TUE WED THU FRI SAT SUN;
+   REQUIRED = @FILE( 'PLUTO.LDT');
+   @TEXT( 'PLUTO_OUT.TXT') = 
+    @WRITEFOR( DAYS( D): DAYS( D), '   ', 
+     START, @NEWLINE( 1));
+ENDDATA
+
+MIN = @SUM( DAYS( I): START( I));
+
+@FOR( DAYS( J): 
+ @SUM( DAYS( I) | I #LE# 5: 
+  START( @WRAP( J - I + 1, 7)))
+   >= REQUIRED( J)
+);
+
+@FOR( DAYS: @GIN( START));
+END
+
+! Solve Pluto Dogs model;
+GO
+
+! Exit script processor;
+QUIT

@@ -1,0 +1,247 @@
+//Microsoft Developer Studio generated resource script.
+//
+#include "resource.h"
+
+#define APSTUDIO_READONLY_SYMBOLS
+/////////////////////////////////////////////////////////////////////////////
+//
+// Generated from the TEXTINCLUDE 2 resource.
+//
+#include "afxres.h"
+
+/////////////////////////////////////////////////////////////////////////////
+#undef APSTUDIO_READONLY_SYMBOLS
+
+/////////////////////////////////////////////////////////////////////////////
+// English (U.S.) resources
+
+#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_ENU)
+#ifdef _WIN32
+LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
+#pragma code_page(1252)
+#endif //_WIN32
+
+#ifdef APSTUDIO_INVOKED
+/////////////////////////////////////////////////////////////////////////////
+//
+// TEXTINCLUDE
+//
+
+1 TEXTINCLUDE DISCARDABLE 
+BEGIN
+    "resource.h\0"
+END
+
+2 TEXTINCLUDE DISCARDABLE 
+BEGIN
+    "#include ""afxres.h""\r\n"
+    "\0"
+END
+
+3 TEXTINCLUDE DISCARDABLE 
+BEGIN
+    "#define _AFX_NO_SPLITTER_RESOURCES\r\n"
+    "#define _AFX_NO_OLE_RESOURCES\r\n"
+    "#define _AFX_NO_TRACKER_RESOURCES\r\n"
+    "#define _AFX_NO_PROPERTY_RESOURCES\r\n"
+    "\r\n"
+    "#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_ENU)\r\n"
+    "#ifdef _WIN32\r\n"
+    "LANGUAGE 9, 1\r\n"
+    "#pragma code_page(1252)\r\n"
+    "#endif //_WIN32\r\n"
+    "#include ""res\\staff.rc2""  // non-Microsoft Visual C++ edited resources\r\n"
+    "#include ""afxres.rc""         // Standard components\r\n"
+    "#endif\r\n"
+    "\0"
+END
+
+#endif    // APSTUDIO_INVOKED
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Icon
+//
+
+// Icon with lowest ID value placed first to ensure application icon
+// remains consistent on all systems.
+IDR_MAINFRAME           ICON    DISCARDABLE     "res\\staff.ico"
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Dialog
+//
+
+IDD_STAFF_DIALOG DIALOGEX 0, 0, 269, 167
+STYLE DS_MODALFRAME | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU
+EXSTYLE WS_EX_APPWINDOW
+CAPTION "Staff Scheduling Using the LINGO DLL"
+FONT 8, "MS Sans Serif", 0, 0, 0x1
+BEGIN
+    DEFPUSHBUTTON   "&Solve",IDOK,203,19,50,14
+    PUSHBUTTON      "E&xit",IDCANCEL,203,35,50,14
+    EDITTEXT        IDC_NEEDS_MON,67,36,31,12,ES_AUTOHSCROLL
+    EDITTEXT        IDC_NEEDS_TUE,67,49,31,12,ES_AUTOHSCROLL
+    EDITTEXT        IDC_NEEDS_WED,67,62,31,12,ES_AUTOHSCROLL
+    EDITTEXT        IDC_NEEDS_THU,67,75,31,12,ES_AUTOHSCROLL
+    EDITTEXT        IDC_NEEDS_FRI,67,88,31,12,ES_AUTOHSCROLL
+    EDITTEXT        IDC_NEEDS_SAT,67,100,31,12,ES_AUTOHSCROLL
+    EDITTEXT        IDC_NEEDS_SUN,67,113,31,12,ES_AUTOHSCROLL
+    LTEXT           "Day",IDC_STATIC,38,17,14,8
+    LTEXT           "Mon",IDC_STATIC,38,37,15,8
+    LTEXT           "Tue",IDC_STATIC,38,50,14,8
+    LTEXT           "Wed",IDC_STATIC,38,63,16,8
+    LTEXT           "Thu",IDC_STATIC,38,76,14,8
+    LTEXT           "Fri",IDC_STATIC,38,89,8,8
+    LTEXT           "Sat",IDC_STATIC,38,102,12,8
+    LTEXT           "Sun",IDC_STATIC,38,115,14,8
+    LTEXT           "Needs",IDC_STATIC,71,17,22,8,0,WS_EX_TRANSPARENT
+    GROUPBOX        "",IDC_STATIC,22,25,171,107
+    LTEXT           "Start",IDC_STATIC,115,17,22,8,0,WS_EX_TRANSPARENT
+    LTEXT           "On Duty",IDC_STATIC,150,17,27,8,0,WS_EX_TRANSPARENT
+    GROUPBOX        "",IDC_STATIC,7,7,255,154
+    LTEXT           "Total:",IDC_STATIC,78,142,19,8
+    CTEXT           "0",IDC_START_MON,107,37,31,9,SS_SUNKEN
+    CTEXT           "0",IDC_START_TUE,107,50,31,9,SS_SUNKEN
+    CTEXT           "0",IDC_START_WED,107,63,31,9,SS_SUNKEN
+    CTEXT           "0",IDC_START_THU,107,76,31,9,SS_SUNKEN
+    CTEXT           "0",IDC_START_FRI,107,89,31,9,SS_SUNKEN
+    CTEXT           "0",IDC_START_SAT,107,102,31,9,SS_SUNKEN
+    CTEXT           "0",IDC_START_SUN,107,115,31,9,SS_SUNKEN
+    CTEXT           "0",IDC_ON_MON,148,37,31,9,SS_SUNKEN
+    CTEXT           "0",IDC_ON_TUE,148,49,31,9,SS_SUNKEN
+    CTEXT           "0",IDC_ON_WED,148,62,31,9,SS_SUNKEN
+    CTEXT           "0",IDC_ON_THU,148,76,31,9,SS_SUNKEN
+    CTEXT           "0",IDC_ON_FRI,148,89,31,9,SS_SUNKEN
+    CTEXT           "0",IDC_ON_SAT,148,102,31,9,SS_SUNKEN
+    CTEXT           "0",IDC_ON_SUN,148,115,31,9,SS_SUNKEN
+    CTEXT           "",IDC_COST,99,142,48,10,SS_SUNKEN
+END
+
+IDD_NEW_IP_SOLUTION DIALOGEX 0, 0, 140, 95
+STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "New Integer Solution"
+FONT 8, "MS Sans Serif"
+BEGIN
+    DEFPUSHBUTTON   "OK",IDOK,76,74,50,14
+    PUSHBUTTON      "Interrupt",IDCANCEL,16,74,50,14
+    LTEXT           "Iteration:",IDC_STATIC,18,14,28,8
+    EDITTEXT        IDC_NEWIP_ITERATION,60,13,62,12,NOT WS_BORDER,
+                    WS_EX_CLIENTEDGE
+    LTEXT           "Objective:",IDC_STATIC,13,31,33,9
+    LTEXT           "Bound:",IDC_STATIC,20,49,26,10
+    EDITTEXT        IDC_NEWIP_OBJECTIVE,60,31,62,12,NOT WS_BORDER,
+                    WS_EX_CLIENTEDGE
+    EDITTEXT        IDC_NEWIP_BOUND,60,49,62,12,NOT WS_BORDER,
+                    WS_EX_CLIENTEDGE
+END
+
+
+#ifndef _MAC
+/////////////////////////////////////////////////////////////////////////////
+//
+// Version
+//
+
+VS_VERSION_INFO VERSIONINFO
+ FILEVERSION 1,0,0,1
+ PRODUCTVERSION 1,0,0,1
+ FILEFLAGSMASK 0x3fL
+#ifdef _DEBUG
+ FILEFLAGS 0x1L
+#else
+ FILEFLAGS 0x0L
+#endif
+ FILEOS 0x4L
+ FILETYPE 0x1L
+ FILESUBTYPE 0x0L
+BEGIN
+    BLOCK "StringFileInfo"
+    BEGIN
+        BLOCK "040904B0"
+        BEGIN
+            VALUE "CompanyName", "\0"
+            VALUE "FileDescription", "staff MFC Application\0"
+            VALUE "FileVersion", "1, 0, 0, 1\0"
+            VALUE "InternalName", "staff\0"
+            VALUE "LegalCopyright", "Copyright (C) 2002\0"
+            VALUE "LegalTrademarks", "\0"
+            VALUE "OriginalFilename", "staff.EXE\0"
+            VALUE "ProductName", "staff Application\0"
+            VALUE "ProductVersion", "1, 0, 0, 1\0"
+        END
+    END
+    BLOCK "VarFileInfo"
+    BEGIN
+        VALUE "Translation", 0x409, 1200
+    END
+END
+
+#endif    // !_MAC
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// DESIGNINFO
+//
+
+#ifdef APSTUDIO_INVOKED
+GUIDELINES DESIGNINFO DISCARDABLE 
+BEGIN
+    IDD_STAFF_DIALOG, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 262
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 160
+    END
+
+    IDD_NEW_IP_SOLUTION, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 133
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 88
+    END
+END
+#endif    // APSTUDIO_INVOKED
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// String Table
+//
+
+STRINGTABLE DISCARDABLE 
+BEGIN
+    IDS_ABOUTBOX            "&About staff..."
+END
+
+#endif    // English (U.S.) resources
+/////////////////////////////////////////////////////////////////////////////
+
+
+
+#ifndef APSTUDIO_INVOKED
+/////////////////////////////////////////////////////////////////////////////
+//
+// Generated from the TEXTINCLUDE 3 resource.
+//
+#define _AFX_NO_SPLITTER_RESOURCES
+#define _AFX_NO_OLE_RESOURCES
+#define _AFX_NO_TRACKER_RESOURCES
+#define _AFX_NO_PROPERTY_RESOURCES
+
+#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_ENU)
+#ifdef _WIN32
+LANGUAGE 9, 1
+#pragma code_page(1252)
+#endif //_WIN32
+#include "res\staff.rc2"  // non-Microsoft Visual C++ edited resources
+#include "afxres.rc"         // Standard components
+#endif
+
+/////////////////////////////////////////////////////////////////////////////
+#endif    // not APSTUDIO_INVOKED
+
