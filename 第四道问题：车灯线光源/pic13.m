@@ -1,129 +1,295 @@
-% 清理环境变量
+%% 车灯线光源优化设计：三维反射光照射情景图
+% 坐标系设定：
+% O：旋转抛物面顶点
+% X：车灯对称轴，指向正前方
+% Y：竖直向上
+% Z：水平横向，即线光源方向
+%
+% 说明：
+% 题目中测试屏距离焦点 25 m，远大于车灯尺寸。
+% 为了论文插图清晰，测试屏位置采用显示缩放，不按真实比例绘制。
+
 clear; clc; close all;
 
-% 创建图形窗口
-figure('Color', 'w', 'Position', [100, 100, 900, 700]);
-hold on; grid off; axis off;
+%% ===================== 1. 基本参数 =====================
+R = 36;              % 开口半径，单位 mm
+h = 21.6;            % 抛物面深度，单位 mm
+f = R^2/(4*h);       % 焦距，f = 15 mm
+
+F = [f, 0, 0];       % 焦点坐标
+
+% 测试屏真实距离为 25 m，这里用显示距离代替
+screenX = 115;       % 测试屏在图中的显示位置
+screenHalfH = 42;    % 测试屏半高
+screenHalfW = 45;    % 测试屏半宽
+
+% B、C 点的显示间距
+% 真实关系：AB = 1.3 m，AC = 2.6 m
+AB_show = 12;
+AC_show = 24;
+
+A = [screenX, 0, 0];
+B = [screenX, 0, AB_show];
+C = [screenX, 0, AC_show];
+
+%% ===================== 2. 图形风格 =====================
+blue = [0.22 0.36 0.72];
+deepBlue = [0.10 0.18 0.40];
+lightBlue = [0.72 0.80 0.95];
+gray = [0.62 0.62 0.62];
+red = [0.85 0.22 0.13];
+
+figure('Color','w','Position',[120 80 1100 720]);
+hold on;
 axis equal;
+axis off;
+set(gca,'Clipping','off');
+set(gcf,'Renderer','opengl');
 
-%% 1. 定义参数
-a = 0.1; % 抛物面方程参数: x = a*(y^2 + z^2)
-R_max = 5; % 抛物面最大半径
-x_screen = 12; % 测试屏所在的 X 坐标
+%% ===================== 3. 绘制旋转抛物面 =====================
+% 抛物面方程：
+% x = (y^2 + z^2)/(4f)
 
-%% 2. 绘制 3D 坐标轴 (O-XYZ)
-axis_len = 8;
-% X轴
-quiver3(0, 0, 0, axis_len, 0, 0, 'b', 'LineWidth', 1.5, 'MaxHeadSize', 0.5);
-text(axis_len+0.5, 0, 0, 'X', 'FontSize', 12, 'Color', 'b', 'HorizontalAlignment', 'center');
-% Y轴
-quiver3(0, 0, 0, 0, axis_len, 0, 'b', 'LineWidth', 1.5, 'MaxHeadSize', 0.5);
-text(0, axis_len+0.5, 0, 'Y', 'FontSize', 12, 'Color', 'b', 'HorizontalAlignment', 'center');
-% Z轴
-quiver3(0, 0, 0, 0, 0, axis_len, 'b', 'LineWidth', 1.5, 'MaxHeadSize', 0.5);
-text(0, 0, axis_len+0.5, 'Z', 'FontSize', 12, 'Color', 'b', 'HorizontalAlignment', 'center');
-% 原点 O
-text(-0.5, -0.5, 0, 'O', 'FontSize', 12, 'Color', 'b');
+x = linspace(0, h, 80);
+theta = linspace(0, 2*pi, 160);
+[X, T] = meshgrid(x, theta);
 
-%% 3. 绘制旋转抛物面 (反射镜)
-[Theta, R] = meshgrid(linspace(0, 2*pi, 40), linspace(0, R_max, 20));
-Y_surf = R .* cos(Theta);
-Z_surf = R .* sin(Theta);
-X_surf = a * (Y_surf.^2 + Z_surf.^2);
+rho = sqrt(4*f*X);
+Y = rho .* sin(T);
+Z = rho .* cos(T);
 
-% 只画一半或者让其半透明以体现立体感
-surf(X_surf, Y_surf, Z_surf, 'FaceColor', 'none', 'EdgeColor', [0.2 0.4 0.8], 'EdgeAlpha', 0.5);
+% 为了让图中 Y 轴竖直显示，绘图时采用：
+% 显示坐标 = [X, Z, Y]
+surf(X, Z, Y, ...
+    'FaceColor', lightBlue, ...
+    'FaceAlpha', 0.33, ...
+    'EdgeColor', 'none');
 
-% 绘制抛物面开口处的灰色底面 (体现截面)
-fill3(a*R_max^2 * ones(size(Theta(1,:))), R_max*cos(Theta(1,:)), R_max*sin(Theta(1,:)), ...
-    [0.8 0.8 0.8], 'FaceAlpha', 0.5, 'EdgeColor', 'k', 'LineStyle', '--');
+% 抛物面口径圆
+rim = [h*ones(numel(theta),1), ...
+       R*sin(theta(:)), ...
+       R*cos(theta(:))];
+plotL(rim, 'Color', gray, 'LineWidth', 1.6);
 
-%% 4. 定义入射点和光线追踪
-% 选择抛物面上的一个点 P
-y_p = 2.5; z_p = 2.5;
-x_p = a * (y_p^2 + z_p^2);
-P = [x_p, y_p, z_p];
+% 抛物面几条经线
+rhoLine = sqrt(4*f*x(:));
+angles = [0, pi/2, pi, 3*pi/2, pi/4, 5*pi/4];
 
-% 计算该点指向外部(凸面侧)的法向量，用于计算反射
-% 曲面 F(x,y,z) = x - a*y^2 - a*z^2 = 0
-% 梯度(法向量) = [1, -2*a*y, -2*a*z]
-normal_out = [1, -2*a*y_p, -2*a*z_p]; 
-% 因为光从内部射来，我们取指向抛物面内部的法线用于计算
-normal_in = [-1, 2*a*y_p, 2*a*z_p];
-normal_in = normal_in / norm(normal_in);
+for k = 1:length(angles)
+    th = angles(k);
+    curve = [x(:), rhoLine*sin(th), rhoLine*cos(th)];
+    if k <= 4
+        plotL(curve, 'Color', blue, 'LineWidth', 1.25);
+    else
+        plotL(curve, 'Color', gray, 'LineWidth', 1.0);
+    end
+end
 
-% 定义入射光向量 (假设从坐标系某处射向点 P)
-% 设定一个起始点
-P_start = [5, -2, 5]; 
-V_in = P - P_start;
-V_in = V_in / norm(V_in); % 归一化入射向量
+%% ===================== 4. 绘制坐标轴 =====================
+axisX = 82;
+axisY = 58;
+axisZ = 58;
 
-% 计算反射光向量 (反射定律: R = I - 2*(I·N)*N)
-V_out = V_in - 2 * dot(V_in, normal_in) * normal_in;
-V_out = V_out / norm(V_out);
+drawArrowL([0 0 0], [axisX 0 0], blue, 1.7, 0.28);
+drawArrowL([0 0 0], [0 axisY 0], blue, 1.7, 0.28);
+drawArrowL([0 0 0], [0 0 -axisZ], blue, 1.7, 0.28);
 
-% 计算反射光与测试屏的交点
-% 直线方程: P_screen = P + t * V_out; 其中 P_screen(1) = x_screen
-t = (x_screen - P(1)) / V_out(1);
-P_intersect = P + t * V_out;
+textL([-4 -3 0], 'O', ...
+    'Color', blue, 'FontSize', 15, 'FontName', 'Times New Roman');
 
-%% 5. 绘制光线和法线
-% 绘制入射光
-quiver3(P_start(1), P_start(2), P_start(3), V_in(1)*norm(P-P_start), V_in(2)*norm(P-P_start), V_in(3)*norm(P-P_start), ...
-    0, 'Color', [0.2 0.4 0.8], 'LineWidth', 1.5, 'MaxHeadSize', 0.1);
-text(P_start(1)+1, P_start(2)+2, P_start(3)-1, '入射光', 'Color', [0.2 0.4 0.8], 'FontSize', 11);
+% 按你的要求修改字母：
+% 原 X -> Y
+% 原 Y -> Z
+% 原 Z -> X
+textL([axisX+4 0 0], 'Y', ...
+    'Color', blue, 'FontSize', 18, 'FontName', 'Times New Roman');
 
-% 绘制法线 (虚线)
-N_len = 6;
-P_normal_end = P - normal_in * N_len; % 向内延伸
-plot3([P(1), P_normal_end(1)], [P(2), P_normal_end(2)], [P(3), P_normal_end(3)], '--', 'Color', [0.2 0.4 0.8], 'LineWidth', 1.5);
-text(P_normal_end(1)+1, P_normal_end(2), P_normal_end(3), '法线', 'Color', [0.2 0.4 0.8], 'FontSize', 11);
+textL([0 axisY+5 0], 'Z', ...
+    'Color', blue, 'FontSize', 18, 'FontName', 'Times New Roman');
 
-% 绘制反射光
-quiver3(P(1), P(2), P(3), V_out(1)*t, V_out(2)*t, V_out(3)*t, ...
-    0, 'Color', [0.2 0.4 0.8], 'LineWidth', 1.5, 'MaxHeadSize', 0.1);
-text(P(1)+3, P(2)+1, P(3)-1, '反射光', 'Color', [0.2 0.4 0.8], 'FontSize', 11);
+textL([0 0 -axisZ-5], 'X', ...
+    'Color', blue, 'FontSize', 18, 'FontName', 'Times New Roman');
 
-% 在入射点 P 绘制一个小圆点和切线辅助线
-plot3(P(1), P(2), P(3), '.', 'MarkerSize', 15, 'Color', [0.2 0.4 0.8]);
-% 简单的切线示意
-plot3([P(1)-1, P(1)+1], [P(2)-0.5, P(2)+0.5], [P(3)-1, P(3)+1], 'Color', [0.2 0.4 0.8], 'LineWidth', 1);
-plot3([P(1)-1, P(1)+1], [P(2)+1, P(2)-1], [P(3), P(3)], 'Color', [0.2 0.4 0.8], 'LineWidth', 1);
+% 对称轴虚线，延伸到测试屏
+plotL([0 0 0; screenX 0 0], ...
+    '--', 'Color', [0.45 0.55 0.85], 'LineWidth', 1.0);
 
-%% 6. 绘制测试屏
-screen_width = 8;
-screen_height = 10;
-% 屏幕的四个顶点
-screen_V = [x_screen, -screen_width/2, -screen_height/2;
-            x_screen, screen_width/2,  -screen_height/2;
-            x_screen, screen_width/2,  screen_height/2;
-            x_screen, -screen_width/2, screen_height/2];
-patch('Vertices', screen_V, 'Faces', [1 2 3 4], 'FaceColor', 'none', 'EdgeColor', [0 0.4 0.7], 'LineWidth', 1.5);
-% 为了体现厚度，再画一层
-patch('Vertices', screen_V+[0.5,0,0], 'Faces', [1 2 3 4], 'FaceColor', 'none', 'EdgeColor', [0 0.4 0.7], 'LineWidth', 1.5);
-plot3([x_screen, x_screen+0.5], [-screen_width/2, -screen_width/2], [screen_height/2, screen_height/2], 'Color', [0 0.4 0.7], 'LineWidth', 1.5);
-plot3([x_screen, x_screen+0.5], [screen_width/2, screen_width/2], [screen_height/2, screen_height/2], 'Color', [0 0.4 0.7], 'LineWidth', 1.5);
-plot3([x_screen, x_screen+0.5], [screen_width/2, screen_width/2], [-screen_height/2, -screen_height/2], 'Color', [0 0.4 0.7], 'LineWidth', 1.5);
+%% ===================== 5. 绘制线光源与焦点 =====================
+% 线光源沿 Z 方向，经过焦点 F
+L_show = 28;
+lineSource = [f, 0, -L_show/2;
+              f, 0,  L_show/2];
 
-text(x_screen, 0, screen_height/2 + 2, '测试屏', 'Color', [0 0.4 0.7], 'FontSize', 12, 'Rotation', -15);
+plotL(lineSource, ...
+    'Color', blue, 'LineWidth', 3.0);
 
-%% 7. 绘制屏幕上的点
-% 绘制反射光打在屏幕上的蓝灰点
-plot3(P_intersect(1), P_intersect(2), P_intersect(3), '.', 'MarkerSize', 20, 'Color', [0.5 0.6 0.7]);
+plotPointL(F, blue, 30);
+textL(F + [-5 -6 5], 'F', ...
+    'Color', blue, 'FontSize', 13, 'FontName', 'Times New Roman');
 
-% 绘制参考红点 A, B, C
-P_A = P_intersect + [0, 1.5, -1];
-P_B = P_intersect + [0, 1.5, 0];
-P_C = P_intersect + [0, 1.5, 1];
-plot3(P_A(1), P_A(2), P_A(3), 'r.', 'MarkerSize', 20); text(P_A(1), P_A(2), P_A(3)-0.8, 'A', 'Color', [0.2 0.4 0.8]);
-plot3(P_B(1), P_B(2), P_B(3), 'r.', 'MarkerSize', 20); text(P_B(1), P_B(2), P_B(3)-0.8, 'B', 'Color', [0.2 0.4 0.8]);
-plot3(P_C(1), P_C(2), P_C(3), 'r.', 'MarkerSize', 20); text(P_C(1), P_C(2), P_C(3)-0.8, 'C', 'Color', [0.2 0.4 0.8]);
+%% ===================== 6. 绘制测试屏 =====================
+% 测试屏与 FA 垂直，因此测试屏平面为 x = screenX
 
-%% 8. 调整视角和标题
-view(40, 20); % 调整 3D 视角以匹配原图的透视关系
-title('图 2：反射光照射情景图', 'Position', [x_screen/2, -screen_width, -screen_height], 'FontSize', 14, 'FontWeight', 'normal');
+yMin = -screenHalfH;
+yMax =  screenHalfH;
+zMin = -screenHalfW;
+zMax =  screenHalfW;
 
-% 调整坐标轴显示范围
-xlim([-2, x_screen+2]);
-ylim([-6, 6]);
-zlim([-6, 6]);
+screenFront = [screenX yMin zMin;
+               screenX yMax zMin;
+               screenX yMax zMax;
+               screenX yMin zMax;
+               screenX yMin zMin];
+
+% 画前矩形边框
+plotL(screenFront, 'Color', deepBlue, 'LineWidth', 2.0);
+
+% 画一个很薄的厚度，增强立体感
+thick = 5;
+screenBack = screenFront;
+screenBack(:,1) = screenBack(:,1) + thick;
+
+plotL(screenBack, 'Color', blue, 'LineWidth', 1.2);
+
+for i = 1:4
+    plotL([screenFront(i,:); screenBack(i,:)], ...
+        'Color', blue, 'LineWidth', 1.1);
+end
+
+% 屏上过 A 点的水平线
+plotL([screenX 0 zMin; screenX 0 zMax], ...
+    ':', 'Color', blue, 'LineWidth', 1.1);
+
+textL([screenX+3, 32, 25], '测试屏', ...
+    'Color', blue, 'FontSize', 15, ...
+    'FontName', 'SimSun', 'Rotation', -22);
+
+%% ===================== 7. 绘制 A、B、C 三点 =====================
+plotPointL(A, red, 55);
+plotPointL(B, red, 55);
+plotPointL(C, red, 55);
+
+textL(A + [0 -3 -4], 'A', ...
+    'Color', blue, 'FontSize', 13, 'FontName', 'Times New Roman');
+
+textL(B + [0 -3 1], 'B', ...
+    'Color', blue, 'FontSize', 13, 'FontName', 'Times New Roman');
+
+textL(C + [0 -3 1], 'C', ...
+    'Color', blue, 'FontSize', 13, 'FontName', 'Times New Roman');
+
+%% ===================== 8. 绘制入射光、反射光和法线 =====================
+% 选取线光源上一点 S 和抛物面上一点 P
+S = [f, 0, 8];
+
+Py = 23;
+Pz = -16;
+Px = (Py^2 + Pz^2)/(4*f);
+P = [Px, Py, Pz];
+
+% 抛物面法向量
+% 对隐函数 x - (y^2+z^2)/(4f)=0，
+% 法向量为 [1, -y/(2f), -z/(2f)]
+n = [1, -P(2)/(2*f), -P(3)/(2*f)];
+n = n / norm(n);
+
+% 入射方向
+vin = P - S;
+vin = vin / norm(vin);
+
+% 反射方向
+vout = vin - 2 * dot(vin, n) * n;
+vout = vout / norm(vout);
+
+% 反射光与测试屏 x = screenX 的交点
+t = (screenX - P(1)) / vout(1);
+Q = P + t * vout;
+
+% 入射光
+drawArrowL(S, P, blue, 1.7, 0.22);
+textL([18, 15, -5], '入射光', ...
+    'Color', blue, 'FontSize', 14, 'FontName', 'SimSun');
+
+% 反射光
+drawArrowL(P, Q, blue, 1.7, 0.22);
+textL([63, 12, -28], '反射光', ...
+    'Color', blue, 'FontSize', 14, 'FontName', 'SimSun');
+
+% 反射点
+plotPointL(P, blue, 22);
+
+% 法线
+normalLen1 = 20;
+normalLen2 = 24;
+N1 = P - normalLen1*n;
+N2 = P + normalLen2*n;
+
+plotL([N1; N2], ...
+    '--', 'Color', blue, 'LineWidth', 1.3);
+
+textL(P + [12, 4, 2], '法线', ...
+    'Color', blue, 'FontSize', 14, 'FontName', 'SimSun');
+
+%% ===================== 9. 增加一条辅助虚线，使反射关系更清楚 =====================
+auxEnd = P + 40 * vout;
+plotL([P; auxEnd], ...
+    ':', 'Color', [0.45 0.55 0.85], 'LineWidth', 1.0);
+
+%% ===================== 10. 视角与导出 =====================
+view(38, 20);
+camproj perspective;
+camlight headlight;
+lighting gouraud;
+
+xlim([-14, 132]);
+ylim([-68, 68]);
+zlim([-50, 68]);
+
+% 导出图片
+try
+    exportgraphics(gcf, '反射光照射情景图_改进版.png', 'Resolution', 300);
+catch
+    print(gcf, '反射光照射情景图_改进版.png', '-dpng', '-r300');
+end
+
+%% ===================== 局部函数 =====================
+function Q = mapXYZ(P)
+    % 逻辑坐标 [X,Y,Z] 映射为显示坐标 [X,Z,Y]
+    % 这样可以让论文中的 Y 轴在图中竖直向上
+    if isrow(P)
+        Q = [P(1), P(3), P(2)];
+    else
+        Q = [P(:,1), P(:,3), P(:,2)];
+    end
+end
+
+function plotL(P, varargin)
+    Q = mapXYZ(P);
+    plot3(Q(:,1), Q(:,2), Q(:,3), varargin{:});
+end
+
+function drawArrowL(P1, P2, colorValue, lineWidthValue, headSizeValue)
+    Q1 = mapXYZ(P1);
+    Q2 = mapXYZ(P2);
+    V = Q2 - Q1;
+
+    quiver3(Q1(1), Q1(2), Q1(3), ...
+            V(1), V(2), V(3), ...
+            0, ...
+            'Color', colorValue, ...
+            'LineWidth', lineWidthValue, ...
+            'MaxHeadSize', headSizeValue);
+end
+
+function textL(P, str, varargin)
+    Q = mapXYZ(P);
+    text(Q(1), Q(2), Q(3), str, varargin{:});
+end
+
+function plotPointL(P, colorValue, sizeValue)
+    Q = mapXYZ(P);
+    scatter3(Q(1), Q(2), Q(3), ...
+        sizeValue, ...
+        'MarkerFaceColor', colorValue, ...
+        'MarkerEdgeColor', colorValue);
+end
