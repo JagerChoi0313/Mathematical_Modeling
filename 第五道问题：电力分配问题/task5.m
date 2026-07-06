@@ -261,6 +261,30 @@ disp(adjust_table);
 
 fprintf('调整后总出力：%.4f MW\n', sum(P_adjust));
 
+%% ===================== 9.1 安全裕度下机组出力方案表 =====================
+
+Reach_Upper_Limit = cell(8, 1);
+
+for i = 1:8
+    if abs(P_adjust(i) - P_max(i)) <= 1e-6
+        Reach_Upper_Limit{i} = '是';
+    else
+        Reach_Upper_Limit{i} = '否';
+    end
+end
+
+Adopted_Constraint = repmat({limit_type}, 8, 1);
+
+safe_dispatch_table = table(Gen, Current_Output, Lower_Limit, ...
+    Initial_Dispatch, Adjusted_Dispatch, Adjust_Change, Upper_Limit, ...
+    Reach_Upper_Limit, Adopted_Constraint, ...
+    'VariableNames', {'机组编号', '当前出力_MW', '出力下限_MW', ...
+    '初始出力_MW', '安全裕度下执行出力_MW', '出力变化_MW', ...
+    '出力上限_MW', '是否达到上限', '采用约束类型'});
+
+fprintf('\n================ 安全裕度下机组出力方案表 ================\n');
+disp(safe_dispatch_table);
+
 %% 10. 输出线路潮流对比表
 
 fprintf('\n================ 第五问线路潮流对比结果 ================\n');
@@ -343,47 +367,30 @@ writetable(adjust_table, '第五问_阻塞调整前后机组出力对比表.xlsx
 writetable(line_compare_table, '第五问_阻塞调整前后线路潮流对比表.xlsx');
 writetable(cost_table, '第五问_阻塞费用构成表.xlsx');
 writetable(q4_q5_line_table, '第四问与第五问初始线路潮流对比表.xlsx');
-
+writetable(safe_dispatch_table, '第五问_安全裕度下机组出力方案表.xlsx');
 fprintf('\nExcel表格已导出到当前MATLAB文件夹。\n');
 
-%% 14. 绘制所有论文图片
+%% ===================== 14. 绘制第五问论文图片 =====================
+
+% 关闭已有图窗，避免看错旧图
+close all;
 
 fontName = 'Microsoft YaHei';
 
-% 低饱和度配色
+% 低饱和度论文配色
 color_blue   = [0.55 0.67 0.82];
 color_orange = [0.86 0.63 0.47];
 color_gray   = [0.72 0.72 0.72];
 color_green  = [0.58 0.72 0.62];
 color_red    = [0.78 0.48 0.45];
 
-%% 图5-7：负荷1052.8MW时各机组初始出力图
+%% 图5-7：负荷1052.8MW时各机组初始出力及上下限图
 
 figure('Color', 'w');
 
-b = bar(P_init(:));
-b.FaceColor = color_blue;
-b.EdgeColor = [0.35 0.35 0.35];
-b.LineWidth = 0.8;
+b = bar([P_min(:), P_init(:), P_max(:)], 'grouped');
 
-xlabel('机组编号', 'FontName', fontName);
-ylabel('出力 / MW', 'FontName', fontName);
-title('负荷1052.8MW时各机组初始出力图', 'FontName', fontName);
-
-set(gca, 'FontName', fontName, 'LineWidth', 1);
-grid on;
-box on;
-
-remove_toolbar();
-exportgraphics(gcf, '图5-7_负荷1052.8MW时各机组初始出力图.png', 'Resolution', 300);
-
-%% 图5-8：初始方案线路潮流及限值对比图
-
-figure('Color', 'w');
-
-b = bar([abs_F_init(:), L_normal(:), L_safe(:)], 'grouped');
-
-b(1).FaceColor = color_orange;
+b(1).FaceColor = color_gray;
 b(1).EdgeColor = [0.35 0.35 0.35];
 b(1).LineWidth = 0.8;
 
@@ -391,23 +398,85 @@ b(2).FaceColor = color_blue;
 b(2).EdgeColor = [0.35 0.35 0.35];
 b(2).LineWidth = 0.8;
 
-b(3).FaceColor = color_gray;
+b(3).FaceColor = color_orange;
 b(3).EdgeColor = [0.35 0.35 0.35];
 b(3).LineWidth = 0.8;
+
+xlabel('机组编号', 'FontName', fontName);
+ylabel('出力 / MW', 'FontName', fontName);
+title('负荷1052.8MW时各机组初始出力及上下限图', 'FontName', fontName);
+
+legend({'出力下限', '初始出力', '出力上限'}, ...
+    'Location', 'best', ...
+    'FontName', fontName, ...
+    'Box', 'on');
+
+set(gca, 'FontName', fontName, 'LineWidth', 1);
+grid on;
+box on;
+
+ax = gca;
+try
+    ax.Toolbar.Visible = 'off';
+catch
+end
+
+exportgraphics(gcf, '图5-7_负荷1052.8MW时各机组初始出力及上下限图.png', 'Resolution', 300);
+
+
+%% 图5-8：初始方案线路潮流及限值对比图
+
+figure('Color', 'w', 'Position', [100, 100, 1000, 600]);
+
+x = 1:6;
+
+% 柱状图：初始潮流绝对值
+b = bar(x, abs_F_init(:), 0.45);
+hold on;
+
+b.FaceColor = [0.86 0.63 0.47];   % 柔和橙
+b.EdgeColor = [0.35 0.35 0.35];
+b.LineWidth = 0.8;
+
+% 折线：正常潮流限值
+p1 = plot(x, L_normal, '-o', ...
+    'Color', [0.35 0.35 0.35], ...
+    'LineWidth', 1.8, ...
+    'MarkerSize', 6, ...
+    'MarkerFaceColor', [0.72 0.72 0.72]);
+
+% 折线：安全裕度后限值
+p2 = plot(x, L_safe, '-s', ...
+    'Color', [0.35 0.55 0.40], ...
+    'LineWidth', 1.8, ...
+    'MarkerSize', 6, ...
+    'MarkerFaceColor', [0.58 0.72 0.62]);
 
 xlabel('线路编号', 'FontName', fontName);
 ylabel('潮流绝对值 / MW', 'FontName', fontName);
 title('初始方案线路潮流及限值对比图', 'FontName', fontName);
 
 legend({'初始潮流绝对值', '正常潮流限值', '安全裕度后限值'}, ...
-    'Location', 'best', 'FontName', fontName, 'Box', 'on');
+    'Location', 'northoutside', ...
+    'Orientation', 'horizontal', ...
+    'FontName', fontName, ...
+    'Box', 'on');
 
 set(gca, 'FontName', fontName, 'LineWidth', 1);
 grid on;
 box on;
 
-remove_toolbar();
+xlim([0.5, 6.5]);
+ylim([0, max(L_safe) + 15]);
+
+ax = gca;
+try
+    ax.Toolbar.Visible = 'off';
+catch
+end
+
 exportgraphics(gcf, '图5-8_初始方案线路潮流及限值对比图.png', 'Resolution', 300);
+
 
 %% 图5-9：阻塞调整前后各机组出力对比图
 
@@ -428,20 +497,32 @@ ylabel('出力 / MW', 'FontName', fontName);
 title('阻塞调整前后各机组出力对比图', 'FontName', fontName);
 
 legend({'初始出力', '调整后出力'}, ...
-    'Location', 'best', 'FontName', fontName, 'Box', 'on');
+    'Location', 'best', ...
+    'FontName', fontName, ...
+    'Box', 'on');
 
 set(gca, 'FontName', fontName, 'LineWidth', 1);
 grid on;
 box on;
 
-remove_toolbar();
+ax = gca;
+try
+    ax.Toolbar.Visible = 'off';
+catch
+end
+
 exportgraphics(gcf, '图5-9_阻塞调整前后各机组出力对比图.png', 'Resolution', 300);
+
 
 %% 图5-10：阻塞调整前后线路潮流对比图
 
-figure('Color', 'w');
+figure('Color', 'w', 'Position', [100, 100, 1000, 600]);
 
-b = bar([abs_F_init(:), abs_F_adjust(:), L_normal(:), L_safe(:)], 'grouped');
+x = 1:6;
+
+% 只用柱状图表示调整前后潮流
+b = bar(x, [abs_F_init(:), abs_F_adjust(:)], 'grouped');
+hold on;
 
 b(1).FaceColor = color_blue;
 b(1).EdgeColor = [0.35 0.35 0.35];
@@ -451,13 +532,18 @@ b(2).FaceColor = color_orange;
 b(2).EdgeColor = [0.35 0.35 0.35];
 b(2).LineWidth = 0.8;
 
-b(3).FaceColor = color_gray;
-b(3).EdgeColor = [0.35 0.35 0.35];
-b(3).LineWidth = 0.8;
+% 用折线表示正常潮流限值和安全裕度后限值
+p1 = plot(x, L_normal, '-o', ...
+    'Color', [0.35 0.35 0.35], ...
+    'LineWidth', 1.8, ...
+    'MarkerSize', 6, ...
+    'MarkerFaceColor', [0.72 0.72 0.72]);
 
-b(4).FaceColor = color_green;
-b(4).EdgeColor = [0.35 0.35 0.35];
-b(4).LineWidth = 0.8;
+p2 = plot(x, L_safe, '-s', ...
+    'Color', [0.35 0.55 0.40], ...
+    'LineWidth', 1.8, ...
+    'MarkerSize', 6, ...
+    'MarkerFaceColor', color_green);
 
 xlabel('线路编号', 'FontName', fontName);
 ylabel('潮流绝对值 / MW', 'FontName', fontName);
@@ -465,77 +551,25 @@ title('阻塞调整前后线路潮流对比图', 'FontName', fontName);
 
 legend({'调整前潮流绝对值', '调整后潮流绝对值', ...
     '正常潮流限值', '安全裕度后限值'}, ...
-    'Location', 'best', 'FontName', fontName, 'Box', 'on');
+    'Location', 'northoutside', ...
+    'Orientation', 'horizontal', ...
+    'FontName', fontName, ...
+    'Box', 'on');
 
 set(gca, 'FontName', fontName, 'LineWidth', 1);
 grid on;
 box on;
 
-remove_toolbar();
+xlim([0.5, 6.5]);
+ylim([0, max(L_safe) + 15]);
+
+ax = gca;
+try
+    ax.Toolbar.Visible = 'off';
+catch
+end
+
 exportgraphics(gcf, '图5-10_阻塞调整前后线路潮流对比图.png', 'Resolution', 300);
-
-%% 图5-11：各机组阻塞费用构成图
-
-figure('Color', 'w');
-
-b = bar([C1_Gen, C2_Gen], 'stacked');
-
-b(1).FaceColor = color_blue;
-b(1).EdgeColor = [0.35 0.35 0.35];
-b(1).LineWidth = 0.8;
-
-b(2).FaceColor = color_orange;
-b(2).EdgeColor = [0.35 0.35 0.35];
-b(2).LineWidth = 0.8;
-
-xlabel('机组编号', 'FontName', fontName);
-ylabel('费用 / 元', 'FontName', fontName);
-title('各机组阻塞费用构成图', 'FontName', fontName);
-
-legend({'序内容量补偿费用', '序外容量补偿费用'}, ...
-    'Location', 'best', 'FontName', fontName, 'Box', 'on');
-
-set(gca, 'FontName', fontName, 'LineWidth', 1);
-grid on;
-box on;
-
-remove_toolbar();
-exportgraphics(gcf, '图5-11_各机组阻塞费用构成图.png', 'Resolution', 300);
-
-%% 图5-12：第四问与第五问初始线路潮流对比图
-
-figure('Color', 'w');
-
-b = bar([abs_F_Q4(:), abs_F_init(:), L_normal(:)], 'grouped');
-
-b(1).FaceColor = color_blue;
-b(1).EdgeColor = [0.35 0.35 0.35];
-b(1).LineWidth = 0.8;
-
-b(2).FaceColor = color_orange;
-b(2).EdgeColor = [0.35 0.35 0.35];
-b(2).LineWidth = 0.8;
-
-b(3).FaceColor = color_gray;
-b(3).EdgeColor = [0.35 0.35 0.35];
-b(3).LineWidth = 0.8;
-
-xlabel('线路编号', 'FontName', fontName);
-ylabel('潮流绝对值 / MW', 'FontName', fontName);
-title('第四问与第五问初始线路潮流对比图', 'FontName', fontName);
-
-legend({'第四问初始潮流绝对值', '第五问初始潮流绝对值', '正常潮流限值'}, ...
-    'Location', 'best', 'FontName', fontName, 'Box', 'on');
-
-set(gca, 'FontName', fontName, 'LineWidth', 1);
-grid on;
-box on;
-
-remove_toolbar();
-exportgraphics(gcf, '图5-12_第四问与第五问初始线路潮流对比图.png', 'Resolution', 300);
-
-fprintf('\n所有论文图片已保存。\n');
-
 %% ===================== 函数1：市场出清 =====================
 
 function [x_plan, P_plan, lambda, selected_detail] = market_clearing(D, P_min, P_max, q, price)

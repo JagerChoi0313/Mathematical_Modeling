@@ -333,38 +333,48 @@ end
 exportgraphics(gcf, '第四问_阻塞调整前后各机组出力对比图.png', 'Resolution', 300);
 
 
-%% 图2：阻塞调整前后线路潮流对比图
+%% 图5-6：阻塞调整前后线路潮流对比图
 
-figure('Color', 'w');
+figure('Color', 'w', 'Position', [100, 100, 1000, 600]);
 
-b2 = bar([abs_F_init(:), abs_F_adjust(:), L(:)], 'grouped');
+x = 1:6;
+
+% 只用柱状图表示调整前后潮流
+b = bar(x, [abs_F_init(:), abs_F_adjust(:)], 'grouped');
 hold on;
 
 % 低饱和度配色
-b2(1).FaceColor = [0.55 0.67 0.82];   % 柔和蓝
-b2(1).EdgeColor = [0.35 0.35 0.35];
-b2(1).LineWidth = 0.8;
+b(1).FaceColor = [0.55 0.67 0.82];   % 柔和蓝
+b(1).EdgeColor = [0.35 0.35 0.35];
+b(1).LineWidth = 0.8;
 
-b2(2).FaceColor = [0.86 0.63 0.47];   % 柔和橙
-b2(2).EdgeColor = [0.35 0.35 0.35];
-b2(2).LineWidth = 0.8;
+b(2).FaceColor = [0.86 0.63 0.47];   % 柔和橙
+b(2).EdgeColor = [0.35 0.35 0.35];
+b(2).LineWidth = 0.8;
 
-b2(3).FaceColor = [0.72 0.72 0.72];   % 柔和灰
-b2(3).EdgeColor = [0.35 0.35 0.35];
-b2(3).LineWidth = 0.8;
+% 用折线表示潮流限值
+p1 = plot(x, L, '-o', ...
+    'Color', [0.35 0.35 0.35], ...
+    'LineWidth', 1.8, ...
+    'MarkerSize', 6, ...
+    'MarkerFaceColor', [0.72 0.72 0.72]);
 
 xlabel('线路编号', 'FontName', fontName);
 ylabel('潮流绝对值 / MW', 'FontName', fontName);
 title('阻塞调整前后线路潮流对比图', 'FontName', fontName);
 
 legend({'调整前潮流绝对值', '调整后潮流绝对值', '潮流限值'}, ...
-    'Location', 'best', ...
+    'Location', 'northoutside', ...
+    'Orientation', 'horizontal', ...
     'FontName', fontName, ...
     'Box', 'on');
 
 set(gca, 'FontName', fontName, 'LineWidth', 1);
 grid on;
 box on;
+
+xlim([0.5, 6.5]);
+ylim([0, max(L) + 20]);
 
 ax = gca;
 try
@@ -373,9 +383,6 @@ catch
 end
 
 exportgraphics(gcf, '第四问_阻塞调整前后线路潮流对比图.png', 'Resolution', 300);
-
-fprintf('低饱和度中文图片已保存。\n');
-
 %% ===================== 函数1：计算线路潮流 =====================
 
 function F = calc_flow(P, B)
