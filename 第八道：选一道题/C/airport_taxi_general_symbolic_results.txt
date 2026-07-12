@@ -1,0 +1,29 @@
+机场出租车司机选择问题：一般符号模型
+
+Pi_A = F_A - C_A - D_A*c_d
+
+Pi_B = F_C - C_B - c_d*(D_0 + D_C)
+
+r_A = -(C_A - F_A + D_A*c_d)/(T_A + T_L + T_w)
+
+r_B = -(C_B - F_C + c_d*(D_0 + D_C))/(T_0 + T_C + T_s)
+
+Delta_r = (C_B - F_C + c_d*(D_0 + D_C))/(T_0 + T_C + T_s) - (C_A - F_A + D_A*c_d)/(T_A + T_L + T_w)
+
+T_w_star = ((C_A - F_A + D_A*c_d)*(T_0 + T_C + T_s))/(C_B - F_C + c_d*(D_0 + D_C)) - T_L - T_A
+
+General cumulative service G = int(m(t0 + z), z, 0, ((C_A - F_A + D_A*c_d)*(T_0 + T_C + T_s))/(C_B - F_C + c_d*(D_0 + D_C)) - T_L - T_A)
+
+General continuous queue threshold = int(m(t0 + z), z, 0, ((C_A - F_A + D_A*c_d)*(T_0 + T_C + T_s))/(C_B - F_C + c_d*(D_0 + D_C)) - T_L - T_A) - 1
+
+Constant-rate waiting time = (n_0 + 1)/mu
+
+Constant-rate continuous queue threshold = - mu*(T_A + T_L - ((C_A - F_A + D_A*c_d)*(T_0 + T_C + T_s))/(C_B - F_C + c_d*(D_0 + D_C))) - 1
+
+dT_star/dPi_A = 1/rB0
+dT_star/dr_B = -PiA0/rB0^2
+dT_star/dH_A = -1
+
+Decision rule:
+T_w <= T_w_star: enter the holding pool.
+T_w > T_w_star: return empty to the city.
