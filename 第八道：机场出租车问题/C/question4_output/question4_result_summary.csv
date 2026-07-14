@@ -1,0 +1,2 @@
+RegularWaitMin,ShortRoundTripLowMin,ShortRoundTripHighMin,ServiceCapacityVehPerHour,PriorityCapacityVehPerHour,ShortReturnFlowVehPerHour,TheoreticalThresholdMin,RecommendedThresholdMin,EligibleShortTripPct,PriorityFlowVehPerHour,ShortRateBefore,LongRateBefore,GapBefore,ShortRateAfter,LongRateAfter,GapAfter,GapReductionPct
+180,60.8,91.2,88.57,26.571,30,64.9444551397797,65,13.8157894736842,4.14473684210526,33.515625,37.0689655172414,3.55334051724138,37.1217123989525,37.0689655172414,0.052746881711137,98.515569181867
