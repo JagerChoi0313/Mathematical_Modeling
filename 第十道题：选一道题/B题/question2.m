@@ -1,117 +1,500 @@
-clear; clc; close all;
+clear;
+clc;
+close all;
 
-sigma_min = 1500;
-sigma_max = 4000;
-smooth_window = 61;
-sgolay_order = 3;
-min_peak_distance = 180;
-min_peak_prominence = 0.25;
+%% =========================================================
+% 第二问：碳化硅外延层厚度计算
+%% =========================================================
 
-data1 = readmatrix('附件1.xlsx');
-data2 = readmatrix('附件2.xlsx');
+smooth_num = 101;           % 移动平均窗口
+min_peak_distance = 180;    % 同类型极值最小间距 cm^-1
+min_peak_prominence = 0.20; % 最小显著度 %
 
-[sigma1,R1] = clean_data(data1);
-[sigma2,R2] = clean_data(data2);
+fit_min = 1000;             % 包络及折射率反演起始波数
+calc_min = 2000;            % 厚度计算波段下限
+calc_max = 3800;            % 厚度计算波段上限
 
-id1 = sigma1 >= sigma_min & sigma1 <= sigma_max;
-id2 = sigma2 >= sigma_min & sigma2 <= sigma_max;
 
-s1 = sigma1(id1);
-r1 = R1(id1);
-s2 = sigma2(id2);
-r2 = R2(id2);
+%% =========================================================
+% 1. 自动读取附件1和附件2
+%% =========================================================
 
-rs1 = my_sgolay(r1,smooth_window,sgolay_order);
-rs2 = my_sgolay(r2,smooth_window,sgolay_order);
+f1 = dir('附件1*.xlsx');
+f2 = dir('附件2*.xlsx');
 
-[~,peak1] = my_findpeaks(s1,rs1,min_peak_distance,min_peak_prominence);
-[~,valley1] = my_findpeaks(s1,-rs1,min_peak_distance,min_peak_prominence);
-
-[~,peak2] = my_findpeaks(s2,rs2,min_peak_distance,min_peak_prominence);
-[~,valley2] = my_findpeaks(s2,-rs2,min_peak_distance,min_peak_prominence);
-
-[dp10,Rp10] = period_fit(peak1);
-[dv10,Rv10] = period_fit(valley1);
-[dp15,Rp15] = period_fit(peak2);
-[dv15,Rv15] = period_fit(valley2);
-
-[d10,R10] = common_period_fit(peak1,valley1);
-[d15,R15] = common_period_fit(peak2,valley2);
-
-n = inverse_n(d10,d15);
-
-h10 = thickness_period(d10,n,10);
-h15 = thickness_period(d15,n,15);
-h = (h10+h15)/2;
-
-n_peak = inverse_n(dp10,dp15);
-h_peak = thickness_period(dp10,n_peak,10);
-
-n_valley = inverse_n(dv10,dv15);
-h_valley = thickness_period(dv10,n_valley,10);
-
-Np10 = length(peak1)-1;
-Nv10 = length(valley1)-1;
-Np15 = length(peak2)-1;
-Nv15 = length(valley2)-1;
-
-hNp10 = thickness_N(Np10,peak1(1),peak1(end),n,10);
-hNv10 = thickness_N(Nv10,valley1(1),valley1(end),n,10);
-hNp15 = thickness_N(Np15,peak2(1),peak2(end),n,15);
-hNv15 = thickness_N(Nv15,valley2(1),valley2(end),n,15);
-
-he_p10 = thickness_period(diff(peak1),n,10);
-he_v10 = thickness_period(diff(valley1),n,10);
-he_p15 = thickness_period(diff(peak2),n,15);
-he_v15 = thickness_period(diff(valley2),n,15);
-
-all_h = [he_p10(:);he_v10(:);he_p15(:);he_v15(:)];
-
-fprintf('\n========== 第二问计算结果 ==========\n');
-fprintf('附件1：峰 %d 个，谷 %d 个\n',length(peak1),length(valley1));
-fprintf('附件2：峰 %d 个，谷 %d 个\n',length(peak2),length(valley2));
-
-fprintf('\n10°峰周期：%.6f cm^-1，R^2=%.8f\n',dp10,Rp10);
-fprintf('10°谷周期：%.6f cm^-1，R^2=%.8f\n',dv10,Rv10);
-fprintf('10°共同周期：%.6f cm^-1，R^2=%.8f\n',d10,R10);
-
-fprintf('\n15°峰周期：%.6f cm^-1，R^2=%.8f\n',dp15,Rp15);
-fprintf('15°谷周期：%.6f cm^-1，R^2=%.8f\n',dv15,Rv15);
-fprintf('15°共同周期：%.6f cm^-1，R^2=%.8f\n',d15,R15);
-
-fprintf('\n等效折射率 n = %.8f\n',n);
-fprintf('10°厚度 d = %.8f um\n',h10);
-fprintf('15°厚度 d = %.8f um\n',h15);
-fprintf('最终厚度 d = %.8f um\n',h);
-
-fprintf('\n仅峰反演：n=%.8f，d=%.8f um\n',n_peak,h_peak);
-fprintf('仅谷反演：n=%.8f，d=%.8f um\n',n_valley,h_valley);
-
-fprintf('\n跨N周期结果：\n');
-fprintf('10°峰：%.8f um\n',hNp10);
-fprintf('10°谷：%.8f um\n',hNv10);
-fprintf('15°峰：%.8f um\n',hNp15);
-fprintf('15°谷：%.8f um\n',hNv15);
-
-fprintf('\n逐周期统计：\n');
-show_stat('10°峰',he_p10);
-show_stat('10°谷',he_v10);
-show_stat('15°峰',he_p15);
-show_stat('15°谷',he_v15);
-show_stat('全部',all_h);
-
-den = d10^2-d15^2;
-if abs(den)/((d10^2+d15^2)/2) < 0.02
-    fprintf('\n提示：两组条纹周期较接近，折射率反演对周期误差较敏感。\n');
+if isempty(f1) || isempty(f2)
+    error('未找到附件1或附件2，请将程序和Excel文件放在同一文件夹。');
 end
 
+data1 = readmatrix(f1(1).name);
+data2 = readmatrix(f2(1).name);
 
-function [sigma,R] = clean_data(data)
+
+%% =========================================================
+% 2. 分别求解10°和15°数据
+%% =========================================================
+
+res10 = solve_one( ...
+    data1, ...
+    10, ...
+    smooth_num, ...
+    min_peak_distance, ...
+    min_peak_prominence, ...
+    fit_min, ...
+    calc_min, ...
+    calc_max);
+
+res15 = solve_one( ...
+    data2, ...
+    15, ...
+    smooth_num, ...
+    min_peak_distance, ...
+    min_peak_prominence, ...
+    fit_min, ...
+    calc_min, ...
+    calc_max);
+
+
+%% =========================================================
+% 3. 输出第二问计算结果
+%% =========================================================
+
+fprintf('\n');
+fprintf('====================================================\n');
+fprintf('第二问计算结果（官方讲评路线）\n');
+fprintf('====================================================\n');
+
+print_result(res10);
+print_result(res15);
+
+d_final = (res10.mean_d + res15.mean_d) / 2;
+
+fprintf('\n两组结果简单平均厚度：%.6f um\n', d_final);
+
+
+%% =========================================================
+% 4. 输出典型波数处折射率
+%% =========================================================
+
+sample_sigma = [1500 2000 2500 3000 3500];
+
+fprintf('\n附件1折射率参考值：\n');
+print_n_samples(res10, sample_sigma);
+
+fprintf('\n附件2折射率参考值：\n');
+print_n_samples(res15, sample_sigma);
+
+
+%% =========================================================
+% 5. 图1：附件1峰谷及上下包络
+%% =========================================================
+
+figure(1);
+set(gcf, ...
+    'Color','w', ...
+    'Position',[150 100 1050 600]);
+
+plot( ...
+    res10.sigma, ...
+    res10.raw, ...
+    'LineWidth',0.7);
+
+hold on;
+
+plot( ...
+    res10.sigma, ...
+    res10.smooth, ...
+    'LineWidth',1.3);
+
+scatter( ...
+    res10.peak_x, ...
+    res10.peak_y, ...
+    42, ...
+    'o', ...
+    'filled');
+
+scatter( ...
+    res10.valley_x, ...
+    res10.valley_y, ...
+    42, ...
+    'v', ...
+    'filled');
+
+xx = res10.n_sigma;
+
+upper10 = interp1( ...
+    res10.peak_x, ...
+    res10.peak_y, ...
+    xx, ...
+    'pchip');
+
+lower10 = interp1( ...
+    res10.valley_x, ...
+    res10.valley_y, ...
+    xx, ...
+    'pchip');
+
+plot(xx, upper10, '--', 'LineWidth',1.3);
+plot(xx, lower10, '--', 'LineWidth',1.3);
+
+xlabel('波数 \sigma / cm^{-1}', ...
+    'FontSize',12);
+
+ylabel('反射率 R / %', ...
+    'FontSize',12);
+
+title('附件1：10°入射角光谱峰谷及上下包络线', ...
+    'FontSize',13);
+
+legend( ...
+    '原始光谱', ...
+    '101点移动平均', ...
+    '干涉峰', ...
+    '干涉谷', ...
+    '上包络线', ...
+    '下包络线', ...
+    'Location','best');
+
+grid on;
+box on;
+set(gca,'FontSize',11);
+
+
+%% =========================================================
+% 6. 图2：附件2峰谷及上下包络
+%% =========================================================
+
+figure(2);
+set(gcf, ...
+    'Color','w', ...
+    'Position',[150 100 1050 600]);
+
+plot( ...
+    res15.sigma, ...
+    res15.raw, ...
+    'LineWidth',0.7);
+
+hold on;
+
+plot( ...
+    res15.sigma, ...
+    res15.smooth, ...
+    'LineWidth',1.3);
+
+scatter( ...
+    res15.peak_x, ...
+    res15.peak_y, ...
+    42, ...
+    'o', ...
+    'filled');
+
+scatter( ...
+    res15.valley_x, ...
+    res15.valley_y, ...
+    42, ...
+    'v', ...
+    'filled');
+
+xx = res15.n_sigma;
+
+upper15 = interp1( ...
+    res15.peak_x, ...
+    res15.peak_y, ...
+    xx, ...
+    'pchip');
+
+lower15 = interp1( ...
+    res15.valley_x, ...
+    res15.valley_y, ...
+    xx, ...
+    'pchip');
+
+plot(xx, upper15, '--', 'LineWidth',1.3);
+plot(xx, lower15, '--', 'LineWidth',1.3);
+
+xlabel('波数 \sigma / cm^{-1}', ...
+    'FontSize',12);
+
+ylabel('反射率 R / %', ...
+    'FontSize',12);
+
+title('附件2：15°入射角光谱峰谷及上下包络线', ...
+    'FontSize',13);
+
+legend( ...
+    '原始光谱', ...
+    '101点移动平均', ...
+    '干涉峰', ...
+    '干涉谷', ...
+    '上包络线', ...
+    '下包络线', ...
+    'Location','best');
+
+grid on;
+box on;
+set(gca,'FontSize',11);
+
+
+%% =========================================================
+% 7. 图3：折射率随波数变化
+%% =========================================================
+
+figure(3);
+set(gcf, ...
+    'Color','w', ...
+    'Position',[180 100 950 570]);
+
+plot( ...
+    res10.n_sigma, ...
+    res10.n_curve, ...
+    'LineWidth',1.6);
+
+hold on;
+
+plot( ...
+    res15.n_sigma, ...
+    res15.n_curve, ...
+    'LineWidth',1.6);
+
+xlabel('波数 \sigma / cm^{-1}', ...
+    'FontSize',12);
+
+ylabel('折射率 n', ...
+    'FontSize',12);
+
+title('碳化硅外延层折射率反演结果', ...
+    'FontSize',13);
+
+legend( ...
+    '10°', ...
+    '15°', ...
+    'Location','best');
+
+grid on;
+box on;
+set(gca,'FontSize',11);
+
+
+%% =========================================================
+% 8. 图4：78组厚度计算结果分布
+%% =========================================================
+
+% 这两个变量就是前面报错时缺少的变量
+d10 = res10.pair_table.d_um;
+d15 = res15.pair_table.d_um;
+
+d10 = d10(:);
+d15 = d15(:);
+
+figure(4);
+set(gcf, ...
+    'Color','w', ...
+    'Position',[180 100 900 600]);
+
+hold on;
+
+% 自定义箱线图，并叠加全部厚度散点
+draw_box_points(d10,1);
+draw_box_points(d15,2);
+
+mean10 = mean(d10);
+mean15 = mean(d15);
+
+% 均值虚线
+plot( ...
+    [0.72 1.28], ...
+    [mean10 mean10], ...
+    '--', ...
+    'LineWidth',1.6);
+
+plot( ...
+    [1.72 2.28], ...
+    [mean15 mean15], ...
+    '--', ...
+    'LineWidth',1.6);
+
+% 均值文字
+text( ...
+    1.30, ...
+    mean10, ...
+    sprintf('均值 = %.4f \\mum',mean10), ...
+    'FontSize',11);
+
+text( ...
+    2.30, ...
+    mean15, ...
+    sprintf('均值 = %.4f \\mum',mean15), ...
+    'FontSize',11);
+
+xlim([0.5 2.72]);
+
+set(gca, ...
+    'XTick',[1 2], ...
+    'XTickLabel',{'10°','15°'}, ...
+    'FontSize',11);
+
+xlabel('入射角', ...
+    'FontSize',12);
+
+ylabel('外延层厚度 d / \mum', ...
+    'FontSize',12);
+
+title('不同入射角下78组外延层厚度计算结果分布', ...
+    'FontSize',13);
+
+grid on;
+box on;
+
+
+%% =========================================================
+% 9. 输出78组厚度统计结果
+%% =========================================================
+
+fprintf('\n');
+fprintf('====================================================\n');
+fprintf('78组厚度结果分布统计\n');
+fprintf('====================================================\n');
+
+fprintf('\n10°：\n');
+
+fprintf('样本数 = %d\n', ...
+    length(d10));
+
+fprintf('均值   = %.6f um\n', ...
+    mean(d10));
+
+fprintf('中位数 = %.6f um\n', ...
+    median(d10));
+
+fprintf('标准差 = %.6f um\n', ...
+    std(d10));
+
+fprintf('CV     = %.4f %%\n', ...
+    std(d10)/mean(d10)*100);
+
+
+fprintf('\n15°：\n');
+
+fprintf('样本数 = %d\n', ...
+    length(d15));
+
+fprintf('均值   = %.6f um\n', ...
+    mean(d15));
+
+fprintf('中位数 = %.6f um\n', ...
+    median(d15));
+
+fprintf('标准差 = %.6f um\n', ...
+    std(d15));
+
+fprintf('CV     = %.4f %%\n', ...
+    std(d15)/mean(d15)*100);
+
+
+%% =========================================================
+% 10. 保存论文图片
+%% =========================================================
+
+exportgraphics( ...
+    figure(1), ...
+    '第二问_附件1峰谷包络线.png', ...
+    'Resolution',300);
+
+exportgraphics( ...
+    figure(2), ...
+    '第二问_附件2峰谷包络线.png', ...
+    'Resolution',300);
+
+exportgraphics( ...
+    figure(3), ...
+    '第二问_折射率曲线.png', ...
+    'Resolution',300);
+
+exportgraphics( ...
+    figure(4), ...
+    '第二问_78组厚度结果分布.png', ...
+    'Resolution',300);
+
+
+%% =========================================================
+% 11. 保存Excel结果
+%% =========================================================
+
+Tsummary = table( ...
+    [10;15], ...
+    [res10.mean_d;res15.mean_d], ...
+    [res10.std_d;res15.std_d], ...
+    [res10.median_d;res15.median_d], ...
+    [res10.cv_d;res15.cv_d], ...
+    [height(res10.pair_table);height(res15.pair_table)], ...
+    'VariableNames',{ ...
+    'Angle_deg', ...
+    'Mean_d_um', ...
+    'Std_d_um', ...
+    'Median_d_um', ...
+    'CV_percent', ...
+    'PairCount'});
+
+excel_name = '第二问_结果汇总.xlsx';
+
+if exist(excel_name,'file')
+    delete(excel_name);
+end
+
+writetable( ...
+    Tsummary, ...
+    excel_name, ...
+    'Sheet','厚度汇总');
+
+writetable( ...
+    res10.extrema_table, ...
+    excel_name, ...
+    'Sheet','附件1极值');
+
+writetable( ...
+    res15.extrema_table, ...
+    excel_name, ...
+    'Sheet','附件2极值');
+
+writetable( ...
+    res10.pair_table, ...
+    excel_name, ...
+    'Sheet','附件1厚度组合');
+
+writetable( ...
+    res15.pair_table, ...
+    excel_name, ...
+    'Sheet','附件2厚度组合');
+
+fprintf('\n图片和Excel结果已经保存到当前文件夹。\n');
+
+
+%% =========================================================
+%                     本地函数
+%% =========================================================
+
+
+function res = solve_one( ...
+    data, ...
+    angle, ...
+    smooth_num, ...
+    min_dist, ...
+    min_prom, ...
+    fit_min, ...
+    calc_min, ...
+    calc_max)
+
+%% 数据清洗
+
 sigma = data(:,1);
 R = data(:,2);
 
 id = isfinite(sigma) & isfinite(R);
+
 sigma = sigma(id);
+R = R(id);
+
+[sigma,id] = sort(sigma);
 R = R(id);
 
 if ~isempty(R) && R(1)==0
@@ -119,159 +502,836 @@ if ~isempty(R) && R(1)==0
     R(1) = [];
 end
 
-[sigma,id] = sort(sigma);
-R = R(id);
+%% 截取分析区域
+
+id = sigma >= fit_min;
+
+x = sigma(id);
+y = R(id);
+
+%% 101点中心移动平均
+
+ys = movmean( ...
+    y, ...
+    smooth_num, ...
+    'Endpoints','shrink');
+
+%% 建立三次样条函数
+
+pp = spline(x,ys);
+
+%% 初步寻找峰谷
+
+[~,rough_peak] = main_peaks( ...
+    x, ...
+    ys, ...
+    min_dist, ...
+    min_prom);
+
+[~,rough_valley] = main_peaks( ...
+    x, ...
+    -ys, ...
+    min_dist, ...
+    min_prom);
+
+%% 利用样条曲线精确定位峰谷
+
+[peak_x,peak_y] = refine_points( ...
+    pp, ...
+    x, ...
+    rough_peak, ...
+    min_dist, ...
+    1);
+
+[valley_x,valley_y] = refine_points( ...
+    pp, ...
+    x, ...
+    rough_valley, ...
+    min_dist, ...
+    -1);
+
+%% 去除过近重复极值
+
+[peak_x,peak_y] = unique_close( ...
+    peak_x, ...
+    peak_y, ...
+    1);
+
+[valley_x,valley_y] = unique_close( ...
+    valley_x, ...
+    valley_y, ...
+    -1);
+
+%% 构造上下包络的公共有效区间
+
+lo = max( ...
+    min(peak_x), ...
+    min(valley_x));
+
+hi = min( ...
+    max(peak_x), ...
+    max(valley_x));
+
+ngrid = linspace( ...
+    max(lo,fit_min), ...
+    hi, ...
+    2500)';
+
+%% 上下包络线
+
+rmax_grid = interp1( ...
+    peak_x, ...
+    peak_y/100, ...
+    ngrid, ...
+    'pchip');
+
+rmin_grid = interp1( ...
+    valley_x, ...
+    valley_y/100, ...
+    ngrid, ...
+    'pchip');
+
+%% 根据两光束上下包络反演折射率
+
+n_grid = refractive_index( ...
+    rmax_grid, ...
+    rmin_grid);
+
+%% 选择稳定波段内的峰谷
+
+pk = ...
+    peak_x >= calc_min & ...
+    peak_x <= calc_max;
+
+vk = ...
+    valley_x >= calc_min & ...
+    valley_x <= calc_max;
+
+sx = [ ...
+    peak_x(pk); ...
+    valley_x(vk)];
+
+stype = [ ...
+    ones(sum(pk),1); ...
+    -ones(sum(vk),1)];
+
+sy = [ ...
+    peak_y(pk); ...
+    valley_y(vk)];
+
+%% 按波数排序
+
+[sx,id] = sort(sx);
+
+stype = stype(id);
+sy = sy(id);
+
+%% 保证峰谷交替
+
+[sx,stype,sy] = make_alternating( ...
+    sx, ...
+    stype, ...
+    sy);
+
+%% 在极值位置求上下包络
+
+rmax = interp1( ...
+    peak_x, ...
+    peak_y/100, ...
+    sx, ...
+    'pchip');
+
+rmin = interp1( ...
+    valley_x, ...
+    valley_y/100, ...
+    sx, ...
+    'pchip');
+
+%% 每个极值位置对应的折射率
+
+nx = refractive_index( ...
+    rmax, ...
+    rmin);
+
+%% 构造所有N>=1的极值组合
+
+pair_sigma1 = [];
+pair_n1 = [];
+
+pair_sigma2 = [];
+pair_n2 = [];
+
+pair_N = [];
+pair_d = [];
+
+m = length(sx);
+
+for i = 1:m-2
+
+    % j=i+1 对应 N=0.5，因此从 i+2 开始
+    for j = i+2:m
+
+        N = (j-i)/2;
+
+        g1 = ...
+            sx(i) * ...
+            sqrt( ...
+            nx(i)^2 - ...
+            sind(angle)^2);
+
+        g2 = ...
+            sx(j) * ...
+            sqrt( ...
+            nx(j)^2 - ...
+            sind(angle)^2);
+
+        den = 2*(g2-g1);
+
+        if den > 0
+
+            % cm 转换为 um
+            d_um = ...
+                N/den * 1e4;
+
+            if ...
+                isfinite(d_um) && ...
+                d_um > 0
+
+                pair_sigma1(end+1,1) = sx(i);
+                pair_n1(end+1,1) = nx(i);
+
+                pair_sigma2(end+1,1) = sx(j);
+                pair_n2(end+1,1) = nx(j);
+
+                pair_N(end+1,1) = N;
+                pair_d(end+1,1) = d_um;
+
+            end
+        end
+    end
+end
+
+%% 保存78组厚度结果
+
+pair_table = table( ...
+    pair_sigma1, ...
+    pair_n1, ...
+    pair_sigma2, ...
+    pair_n2, ...
+    pair_N, ...
+    pair_d, ...
+    'VariableNames',{ ...
+    'sigma1_cm_1', ...
+    'n1', ...
+    'sigma2_cm_1', ...
+    'n2', ...
+    'N', ...
+    'd_um'});
+
+%% 保存有效极值
+
+type_name = strings(length(sx),1);
+
+type_name(stype==1) = "峰";
+type_name(stype==-1) = "谷";
+
+extrema_table = table( ...
+    sx, ...
+    type_name, ...
+    sy, ...
+    nx, ...
+    'VariableNames',{ ...
+    'sigma_cm_1', ...
+    'Type', ...
+    'Reflectance_percent', ...
+    'n'});
+
+%% 保存全部结果
+
+res.angle = angle;
+
+res.sigma = x;
+res.raw = y;
+res.smooth = ys;
+
+res.peak_x = peak_x;
+res.peak_y = peak_y;
+
+res.valley_x = valley_x;
+res.valley_y = valley_y;
+
+res.n_sigma = ngrid;
+res.n_curve = n_grid;
+
+res.extrema_table = extrema_table;
+res.pair_table = pair_table;
+
+res.mean_d = mean(pair_d);
+res.std_d = std(pair_d);
+res.median_d = median(pair_d);
+
+res.cv_d = ...
+    res.std_d / ...
+    res.mean_d * 100;
+
 end
 
 
-function y2 = my_sgolay(y,window,order)
-y = y(:);
-m = (window-1)/2;
-x = (-m:m)';
+%% =========================================================
+% 折射率反演
+%% =========================================================
 
-A = zeros(window,order+1);
-for k = 0:order
-    A(:,k+1) = x.^k;
+function n = refractive_index(rmax,rmin)
+
+% 防止插值产生极小负数
+rmax = max(rmax,0);
+rmin = max(rmin,0);
+
+% 两光束极值模型
+A = ...
+    ( ...
+    sqrt(rmax) + ...
+    sqrt(rmin) ...
+    ) / 2;
+
+% 防止分母为0
+A = min(A,0.999999);
+
+% Fresnel关系
+n = ...
+    (1+A) ./ ...
+    (1-A);
+
 end
 
-G = (A'*A)\A';
-h = G(1,:);
 
-left = flipud(y(2:m+1));
-right = flipud(y(end-m:end-1));
-y2 = conv([left;y;right],h,'valid');
-end
+%% =========================================================
+% 初步峰值识别
+%% =========================================================
 
+function [py,px] = main_peaks( ...
+    x, ...
+    y, ...
+    min_dist, ...
+    min_prom)
 
-function [py,px] = my_findpeaks(x,y,min_distance,min_prominence)
 x = x(:);
 y = y(:);
 
-cand = find(y(2:end-1)>y(1:end-2) & y(2:end-1)>=y(3:end))+1;
+%% 局部极大值候选
+
+cand = find( ...
+    y(2:end-1) > y(1:end-2) & ...
+    y(2:end-1) >= y(3:end)) + 1;
 
 if isempty(cand)
+
     py = [];
     px = [];
+
     return
 end
+
+%% 将波数间隔换算为数据点窗口
 
 dx = median(diff(x));
-w = max(round(min_distance/dx),1);
+
+w = max( ...
+    round(min_dist/dx), ...
+    1);
+
 prom = zeros(size(cand));
 
-for i = 1:length(cand)
-    k = cand(i);
-    a = max(1,k-w);
-    b = min(length(y),k+w);
-    base = max(min(y(a:k)),min(y(k:b)));
-    prom(i) = y(k)-base;
+%% 计算显著度
+
+for k = 1:length(cand)
+
+    i = cand(k);
+
+    L = max(1,i-w);
+    U = min(length(y),i+w);
+
+    left_min = min(y(L:i));
+    right_min = min(y(i:U));
+
+    prom(k) = ...
+        y(i) - ...
+        max(left_min,right_min);
+
 end
 
-id = prom >= min_prominence;
-cand = cand(id);
-prom = prom(id);
+%% 删除显著度过低的点
+
+keep = ...
+    prom >= min_prom;
+
+cand = cand(keep);
+prom = prom(keep);
 
 if isempty(cand)
+
     py = [];
     px = [];
+
     return
 end
 
-selected = cand(1);
-selprom = prom(1);
+%% 最小峰距筛选
 
-for i = 2:length(cand)
-    k = cand(i);
-    if x(k)-x(selected(end)) >= min_distance
-        selected(end+1,1) = k;
-        selprom(end+1,1) = prom(i);
-    elseif prom(i) > selprom(end)
-        selected(end) = k;
-        selprom(end) = prom(i);
+selected = cand(1);
+selected_prom = prom(1);
+
+for k = 2:length(cand)
+
+    i = cand(k);
+
+    if ...
+        x(i)-x(selected(end)) ...
+        >= min_dist
+
+        selected(end+1,1) = i;
+        selected_prom(end+1,1) = prom(k);
+
+    elseif ...
+        prom(k) > ...
+        selected_prom(end)
+
+        selected(end) = i;
+        selected_prom(end) = prom(k);
+
     end
 end
 
 px = x(selected);
 py = y(selected);
+
 end
 
 
-function [delta,R2] = period_fit(s)
-s = s(:);
-k = (0:length(s)-1)';
-p = polyfit(k,s,1);
-delta = p(1);
+%% =========================================================
+% 三次样条极值精化
+%% =========================================================
 
-sf = polyval(p,k);
-SSE = sum((s-sf).^2);
-SST = sum((s-mean(s)).^2);
-R2 = 1-SSE/SST;
+function [xr,yr] = refine_points( ...
+    pp, ...
+    x, ...
+    rough_x, ...
+    min_dist, ...
+    mode)
+
+rough_x = rough_x(:);
+
+xr = zeros(size(rough_x));
+yr = zeros(size(rough_x));
+
+for k = 1:length(rough_x)
+
+    a = max( ...
+        x(1), ...
+        rough_x(k)-min_dist/2);
+
+    b = min( ...
+        x(end), ...
+        rough_x(k)+min_dist/2);
+
+    if mode==1
+
+        % 极大值转化为负函数的极小值
+        fun = @(z) -ppval(pp,z);
+
+    else
+
+        fun = @(z) ppval(pp,z);
+
+    end
+
+    xr(k) = golden_min( ...
+        fun, ...
+        a, ...
+        b, ...
+        1e-7, ...
+        150);
+
+    yr(k) = ...
+        ppval(pp,xr(k));
+
+end
+
+[xr,id] = sort(xr);
+yr = yr(id);
+
 end
 
 
-function [delta,R2] = common_period_fit(peak,valley)
-peak = peak(:);
-valley = valley(:);
+%% =========================================================
+% 黄金分割搜索
+%% =========================================================
 
-kp = (0:length(peak)-1)';
-kv = (0:length(valley)-1)';
+function xmin = golden_min( ...
+    fun, ...
+    a, ...
+    b, ...
+    tol, ...
+    maxiter)
 
-A1 = [kp,ones(length(kp),1),zeros(length(kp),1)];
-A2 = [kv,zeros(length(kv),1),ones(length(kv),1)];
+phi = ...
+    (sqrt(5)-1)/2;
 
-A = [A1;A2];
-y = [peak;valley];
+c = ...
+    b - ...
+    phi*(b-a);
 
-b = A\y;
-delta = b(1);
+d = ...
+    a + ...
+    phi*(b-a);
 
-yf = A*b;
-SSE = sum((y-yf).^2);
-SST = sum((y-mean(y)).^2);
-R2 = 1-SSE/SST;
+fc = fun(c);
+fd = fun(d);
+
+for k = 1:maxiter
+
+    if abs(b-a) < tol
+        break
+    end
+
+    if fc < fd
+
+        b = d;
+
+        d = c;
+        fd = fc;
+
+        c = ...
+            b - ...
+            phi*(b-a);
+
+        fc = fun(c);
+
+    else
+
+        a = c;
+
+        c = d;
+        fc = fd;
+
+        d = ...
+            a + ...
+            phi*(b-a);
+
+        fd = fun(d);
+
+    end
+end
+
+xmin = ...
+    (a+b)/2;
+
 end
 
 
-function n = inverse_n(d10,d15)
-num = d10^2*sind(10)^2-d15^2*sind(15)^2;
-den = d10^2-d15^2;
+%% =========================================================
+% 删除重复极值
+%% =========================================================
 
-if abs(den)<1e-12
-    error('两组周期过于接近，无法反演折射率。');
+function [x2,y2] = unique_close( ...
+    x, ...
+    y, ...
+    mode)
+
+[x,id] = sort(x(:));
+y = y(id);
+
+if isempty(x)
+
+    x2 = x;
+    y2 = y;
+
+    return
 end
 
-v = num/den;
-if v<=0
-    error('折射率反演结果异常。');
+x2 = x(1);
+y2 = y(1);
+
+for k = 2:length(x)
+
+    if ...
+        x(k)-x2(end) < 2
+
+        if ...
+            (mode==1 && y(k)>y2(end)) || ...
+            (mode==-1 && y(k)<y2(end))
+
+            x2(end) = x(k);
+            y2(end) = y(k);
+
+        end
+
+    else
+
+        x2(end+1,1) = x(k);
+        y2(end+1,1) = y(k);
+
+    end
 end
 
-n = sqrt(v);
 end
 
 
-function d = thickness_period(delta,n,alpha)
-v = n^2-sind(alpha)^2;
+%% =========================================================
+% 保证峰谷交替
+%% =========================================================
 
-if v<=0
-    error('厚度计算参数异常。');
+function [x2,t2,y2] = make_alternating( ...
+    x, ...
+    t, ...
+    y)
+
+x = x(:);
+t = t(:);
+y = y(:);
+
+x2 = x(1);
+t2 = t(1);
+y2 = y(1);
+
+for k = 2:length(x)
+
+    if t(k) ~= t2(end)
+
+        x2(end+1,1) = x(k);
+        t2(end+1,1) = t(k);
+        y2(end+1,1) = y(k);
+
+    else
+
+        if t(k)==1
+
+            % 连续两个峰时保留更高的
+            if y(k)>y2(end)
+
+                x2(end) = x(k);
+                y2(end) = y(k);
+
+            end
+
+        else
+
+            % 连续两个谷时保留更低的
+            if y(k)<y2(end)
+
+                x2(end) = x(k);
+                y2(end) = y(k);
+
+            end
+
+        end
+    end
 end
 
-d = 1./(2*sqrt(v).*delta)*1e4;
 end
 
 
-function d = thickness_N(N,s1,s2,n,alpha)
-v = n^2-sind(alpha)^2;
-d = N/(2*sqrt(v)*(s2-s1))*1e4;
+%% =========================================================
+% 输出结果
+%% =========================================================
+
+function print_result(res)
+
+fprintf('\n%d°入射角：\n', ...
+    res.angle);
+
+fprintf( ...
+    '稳定波段参与计算的极值数：%d\n', ...
+    height(res.extrema_table));
+
+fprintf( ...
+    '厚度组合数：%d\n', ...
+    height(res.pair_table));
+
+fprintf( ...
+    '平均厚度 = %.6f um\n', ...
+    res.mean_d);
+
+fprintf( ...
+    '标准差   = %.6f um\n', ...
+    res.std_d);
+
+fprintf( ...
+    '中位数   = %.6f um\n', ...
+    res.median_d);
+
+fprintf( ...
+    'CV       = %.4f %%\n', ...
+    res.cv_d);
+
 end
 
 
-function show_stat(name,d)
-d = d(:);
-m = mean(d);
-s = std(d);
-cv = s/m*100;
+%% =========================================================
+% 输出典型波数折射率
+%% =========================================================
 
-fprintf('%s：均值 %.6f um，标准差 %.6f um，CV %.4f%%\n',...
-    name,m,s,cv);
+function print_n_samples( ...
+    res, ...
+    samples)
+
+for k = 1:length(samples)
+
+    s = samples(k);
+
+    if ...
+        s >= min(res.n_sigma) && ...
+        s <= max(res.n_sigma)
+
+        n = interp1( ...
+            res.n_sigma, ...
+            res.n_curve, ...
+            s, ...
+            'pchip');
+
+        fprintf( ...
+            'n(%g cm^-1) = %.6f\n', ...
+            s, ...
+            n);
+
+    end
+end
+
+end
+
+
+%% =========================================================
+% 自定义箱线图 + 散点
+%% =========================================================
+
+function draw_box_points(d,x0)
+
+d = sort(d(:));
+
+q1 = my_percentile(d,25);
+q2 = my_percentile(d,50);
+q3 = my_percentile(d,75);
+
+IQR = q3-q1;
+
+low_limit = ...
+    q1 - ...
+    1.5*IQR;
+
+high_limit = ...
+    q3 + ...
+    1.5*IQR;
+
+normal = ...
+    d( ...
+    d>=low_limit & ...
+    d<=high_limit);
+
+low_whisker = min(normal);
+high_whisker = max(normal);
+
+w = 0.22;
+
+%% 箱体
+
+rectangle( ...
+    'Position',[ ...
+    x0-w, ...
+    q1, ...
+    2*w, ...
+    q3-q1], ...
+    'LineWidth',1.5);
+
+%% 中位数
+
+plot( ...
+    [x0-w x0+w], ...
+    [q2 q2], ...
+    '-', ...
+    'LineWidth',1.8);
+
+%% 上须
+
+plot( ...
+    [x0 x0], ...
+    [q3 high_whisker], ...
+    '-', ...
+    'LineWidth',1.2);
+
+plot( ...
+    [x0-w/2 x0+w/2], ...
+    [high_whisker high_whisker], ...
+    '-', ...
+    'LineWidth',1.2);
+
+%% 下须
+
+plot( ...
+    [x0 x0], ...
+    [q1 low_whisker], ...
+    '-', ...
+    'LineWidth',1.2);
+
+plot( ...
+    [x0-w/2 x0+w/2], ...
+    [low_whisker low_whisker], ...
+    '-', ...
+    'LineWidth',1.2);
+
+%% 叠加全部厚度点
+
+rng(x0);
+
+jitter = ...
+    0.14 * ...
+    (rand(size(d))-0.5);
+
+scatter( ...
+    x0+jitter, ...
+    d, ...
+    25, ...
+    'filled', ...
+    'MarkerFaceAlpha',0.55, ...
+    'MarkerEdgeAlpha',0.55);
+
+end
+
+
+%% =========================================================
+% 自定义百分位数
+%% =========================================================
+
+function q = my_percentile(x,p)
+
+x = sort(x(:));
+
+n = length(x);
+
+if n==1
+
+    q = x;
+
+    return
+end
+
+pos = ...
+    1 + ...
+    (n-1)*p/100;
+
+i = floor(pos);
+j = ceil(pos);
+
+if i==j
+
+    q = x(i);
+
+else
+
+    q = ...
+        x(i) + ...
+        (pos-i) * ...
+        (x(j)-x(i));
+
+end
+
 end
