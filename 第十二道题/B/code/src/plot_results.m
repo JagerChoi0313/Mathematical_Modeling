@@ -1,667 +1,467 @@
 function plot_results(result, data, projectRoot)
-%PLOT_RESULTS 绘制最优路线、资源剩余量和资金变化图
+%PLOT_RESULTS 绘制路线图、资源变化图和资金变化图
+%
+% 输入：
+%   result      求解结果结构体
+%   data        当前关卡数据结构体
+%   projectRoot 项目根目录
+%
+% 输出：
+%   无（图像直接保存到 figures/caseX 文件夹）
 
-caseFigureDir = fullfile(projectRoot, 'figures', ...
-    sprintf('case%d', data.caseID));
-
+caseFigureDir = fullfile(projectRoot, 'figures', sprintf('case%d', data.caseID));
 if ~isfolder(caseFigureDir)
     mkdir(caseFigureDir);
 end
 
 arrivalDay = result.arrivalDay;
+days = (0:arrivalDay)';
 route = result.position(1:arrivalDay+1);
+waterLeft = round(result.water(1:arrivalDay+1));
+foodLeft  = round(result.food(1:arrivalDay+1));
+cashLeft  = round(result.cash(1:arrivalDay+1), 2);
 
-N = data.numNodes;
+buyDays  = find(result.buyWater(1:arrivalDay) > 0 | result.buyFood(1:arrivalDay) > 0);
+mineDays = find(result.mineFlag(1:arrivalDay) > 0);
 
-fontName = 'Microsoft YaHei';
+fontCN = 'Microsoft YaHei';
+fontEN = 'Times New Roman';
 
-% 配色保持克制，适合论文图
-mapLineColor   = [0.74, 0.79, 0.84];
-routeColor     = [0.06, 0.32, 0.52];
-normalNodeEdge = [0.42, 0.50, 0.58];
+% 配色：尽量克制、论文风格
+colorMapEdge   = [0.75, 0.79, 0.83];
+colorNodeEdge  = [0.35, 0.43, 0.51];
+colorRoute     = [0.05, 0.31, 0.52];
+colorStart     = [0.20, 0.52, 0.30];
+colorEnd       = [0.73, 0.22, 0.15];
+colorMine      = [0.78, 0.48, 0.08];
+colorVillage   = [0.41, 0.27, 0.60];
+colorWater     = [0.12, 0.41, 0.68];
+colorFood      = [0.80, 0.39, 0.10];
+colorCash      = [0.18, 0.50, 0.36];
 
-startColor   = [0.22, 0.55, 0.36];
-endColor     = [0.72, 0.22, 0.18];
-mineColor    = [0.78, 0.48, 0.12];
-villageColor = [0.42, 0.32, 0.58];
+[x, y] = getNodeCoordinates(data);
 
-waterColor = [0.10, 0.42, 0.68];
-foodColor  = [0.80, 0.38, 0.12];
-moneyColor = [0.16, 0.48, 0.36];
+drawRouteFigure();
+drawResourceFigure();
+drawCashFigure();
 
+    function drawRouteFigure()
+        fig = figure('Color', 'w', ...
+            'Units', 'centimeters', ...
+            'Position', [2, 2, 18, 13]);
 
-%% 节点坐标
+        ax = axes(fig);
+        hold(ax, 'on');
 
-x = zeros(N,1);
-y = zeros(N,1);
-
-if data.caseID == 1
-
-    % 第一关按照附件地图的相对位置设置节点中心坐标
-    % 这些坐标只用于绘图，不参与模型求解
-    coord = [
-         1, 1.55, 10.00
-         2, 0.75,  8.65
-         3, 1.15,  7.45
-         4, 2.45,  7.35
-         5, 2.65,  5.95
-         6, 3.90,  5.20
-         7, 4.25,  4.35
-         8, 4.55,  3.35
-         9, 5.85,  2.75
-        10, 5.05,  0.75
-        11, 5.05, -0.45
-        12, 6.55, -1.25
-        13, 5.80, -0.35
-        14, 6.75, -0.15
-        15, 6.40,  1.05
-        16, 7.60,  1.05
-        17, 7.40,  2.75
-        18, 8.45,  2.75
-        19, 9.35,  3.50
-        20, 8.90,  4.45
-        21, 7.80,  6.00
-        22, 6.05,  4.45
-        23, 6.05,  6.45
-        24, 4.80,  7.10
-        25, 3.15,  8.85
-        26, 5.90,  8.85
-        27, 7.45,  8.95
-        ];
-
-    x(coord(:,1)) = coord(:,2);
-    y(coord(:,1)) = coord(:,3);
-
-else
-
-    % 第二关按照附件中的8×8交错六边形网格排列
-    for node = 1:N
-
-        row = ceil(node / 8);
-        col = mod(node - 1, 8) + 1;
-
-        x(node) = col + 0.5 * mod(row - 1, 2);
-        y(node) = (8 - row) * 0.86;
-
-    end
-
-end
-
-
-%% 最优路线地图
-
-fig = figure( ...
-    'Color', 'w', ...
-    'Position', [70, 50, 1280, 900]);
-
-ax = axes(fig);
-hold(ax, 'on');
-
-
-% 绘制地图邻接边
-edges = data.undirectedEdges;
-
-for k = 1:size(edges,1)
-
-    node1 = edges(k,1);
-    node2 = edges(k,2);
-
-    plot(ax, ...
-        [x(node1), x(node2)], ...
-        [y(node1), y(node2)], ...
-        '-', ...
-        'Color', mapLineColor, ...
-        'LineWidth', 1.05);
-
-end
-
-
-% 普通节点
-scatter(ax, ...
-    x, y, ...
-    34, ...
-    'o', ...
-    'MarkerFaceColor', 'w', ...
-    'MarkerEdgeColor', normalNodeEdge, ...
-    'LineWidth', 0.9);
-
-
-%% 绘制最优路线
-
-% 如果有连续停留，只保留实际移动节点用于显示完整移动路径
-moveMask = [true; diff(route(:)) ~= 0];
-moveRoute = route(moveMask);
-
-% 实际每天的行动仍然从完整route判断
-for day = 1:arrivalDay
-
-    node1 = route(day);
-    node2 = route(day+1);
-
-    % 停留或挖矿不画移动箭头
-    if node1 == node2
-        continue;
-    end
-
-    dx = x(node2) - x(node1);
-    dy = y(node2) - y(node1);
-
-    % 从节点边缘开始，到目标节点边缘结束
-    startRatio = 0.08;
-    lineRatio  = 0.84;
-
-    startX = x(node1) + startRatio * dx;
-    startY = y(node1) + startRatio * dy;
-
-    quiver(ax, ...
-        startX, ...
-        startY, ...
-        lineRatio * dx, ...
-        lineRatio * dy, ...
-        0, ...
-        'Color', routeColor, ...
-        'LineWidth', 3.4, ...
-        'MaxHeadSize', 0.18);
-
-    % 第一关路线较短，直接标出每一次移动对应的日期
-    if data.caseID == 1
-
-        midX = (x(node1) + x(node2)) / 2;
-        midY = (y(node1) + y(node2)) / 2;
-
-        % 标签稍微偏离路线
-        len = hypot(dx,dy);
-
-        if len > 0
-            offsetX = -dy / len * 0.16;
-            offsetY =  dx / len * 0.16;
-        else
-            offsetX = 0;
-            offsetY = 0;
+        % 先画底图边
+        edges = data.undirectedEdges;
+        for k = 1:size(edges, 1)
+            u = edges(k, 1);
+            v = edges(k, 2);
+            plot(ax, [x(u), x(v)], [y(u), y(v)], '-', ...
+                'Color', colorMapEdge, 'LineWidth', 1.1);
         end
 
-        text(ax, ...
-            midX + offsetX, ...
-            midY + offsetY, ...
-            sprintf('第%d天', day), ...
-            'FontName', fontName, ...
-            'FontSize', 9.5, ...
-            'Color', [0.18,0.24,0.29], ...
-            'HorizontalAlignment', 'center', ...
-            'VerticalAlignment', 'middle', ...
-            'BackgroundColor', 'w', ...
-            'Margin', 1);
+        % 普通节点
+        scatter(ax, x, y, 48, 'o', ...
+            'MarkerFaceColor', [1 1 1], ...
+            'MarkerEdgeColor', colorNodeEdge, ...
+            'LineWidth', 1.0);
 
+        % 路线节点（去掉连续停留重复）
+        moveRoute = route([true; diff(route(:)) ~= 0]);
+        routeNodes = unique(moveRoute, 'stable');
+
+        % 画路径箭头
+        for t = 1:(numel(moveRoute) - 1)
+            u = moveRoute(t);
+            v = moveRoute(t+1);
+
+            dx = x(v) - x(u);
+            dy = y(v) - y(u);
+            L = hypot(dx, dy);
+            if L < 1e-8
+                continue;
+            end
+
+            % 从节点边缘开始，避免箭头扎进圆点中心
+            sRatio = 0.12;
+            eRatio = 0.82;
+            sx = x(u) + sRatio * dx;
+            sy = y(u) + sRatio * dy;
+            qx = eRatio * dx;
+            qy = eRatio * dy;
+
+            quiver(ax, sx, sy, qx, qy, 0, ...
+                'Color', colorRoute, ...
+                'LineWidth', 2.6, ...
+                'MaxHeadSize', 0.22);
+
+            % 只在第一关标一部分"第几天"，避免过满
+            if data.caseID == 1
+                midx = (x(u) + x(v)) / 2;
+                midy = (y(u) + y(v)) / 2;
+                nx = -dy / L;
+                ny = dx / L;
+                text(ax, midx + 0.10 * nx, midy + 0.10 * ny, ...
+                    sprintf('第%d天', t), ...
+                    'FontName', fontCN, ...
+                    'FontSize', 8.5, ...
+                    'Color', [0.24 0.28 0.32], ...
+                    'HorizontalAlignment', 'center', ...
+                    'BackgroundColor', 'w', ...
+                    'Margin', 0.8);
+            end
+        end
+
+        % 路线上的节点再强调一下
+        scatter(ax, x(routeNodes), y(routeNodes), 70, 'o', ...
+            'MarkerFaceColor', colorRoute, ...
+            'MarkerEdgeColor', 'w', ...
+            'LineWidth', 1.0);
+
+        % 特殊点
+        hStart = scatter(ax, x(data.startNode), y(data.startNode), 110, 's', ...
+            'MarkerFaceColor', colorStart, ...
+            'MarkerEdgeColor', [0.10 0.33 0.16], ...
+            'LineWidth', 1.2);
+
+        hEnd = scatter(ax, x(data.endNode), y(data.endNode), 120, 'd', ...
+            'MarkerFaceColor', colorEnd, ...
+            'MarkerEdgeColor', [0.46 0.10 0.08], ...
+            'LineWidth', 1.2);
+
+        hMine = gobjects(0);
+        if ~isempty(data.mineNodes)
+            hMine = scatter(ax, x(data.mineNodes), y(data.mineNodes), 120, '^', ...
+                'MarkerFaceColor', colorMine, ...
+                'MarkerEdgeColor', [0.50 0.30 0.03], ...
+                'LineWidth', 1.2);
+        end
+
+        hVillage = gobjects(0);
+        if ~isempty(data.villageNodes)
+            hVillage = scatter(ax, x(data.villageNodes), y(data.villageNodes), 130, 'p', ...
+                'MarkerFaceColor', colorVillage, ...
+                'MarkerEdgeColor', [0.24 0.15 0.36], ...
+                'LineWidth', 1.2);
+        end
+
+        % 节点编号：普通节点小一点，路径点加粗，特殊点附文字
+        for node = 1:data.numNodes
+            labelX = x(node) + 0.07;
+            labelY = y(node) + 0.05;
+
+            if node == data.startNode
+                txt = sprintf('起点 %d', node);
+                fs = 11; fw = 'bold'; col = colorStart;
+            elseif node == data.endNode
+                txt = sprintf('终点 %d', node);
+                fs = 11; fw = 'bold'; col = colorEnd;
+            elseif ismember(node, data.mineNodes)
+                txt = sprintf('%d 矿山', node);
+                fs = 10; fw = 'bold'; col = colorMine;
+            elseif ismember(node, data.villageNodes)
+                txt = sprintf('%d 村庄', node);
+                fs = 10; fw = 'bold'; col = colorVillage;
+            elseif ismember(node, routeNodes)
+                txt = sprintf('%d', node);
+                fs = 10.5; fw = 'bold'; col = [0.12 0.18 0.25];
+            else
+                txt = sprintf('%d', node);
+                fs = 9; fw = 'normal'; col = [0.32 0.36 0.40];
+            end
+
+            text(ax, labelX, labelY, txt, ...
+                'FontName', fontCN, ...
+                'FontSize', fs, ...
+                'FontWeight', fw, ...
+                'Color', col);
+        end
+
+        % 标注挖矿和补给
+        annotateMineAndSupply(ax);
+
+        % 标题 + 路线串
+        routeText = join(string(moveRoute), ' → ');
+        title(ax, {sprintf('第%d关最优行进路线', data.caseID), ...
+            ['移动路径：', char(routeText)]}, ...
+            'FontName', fontCN, ...
+            'FontSize', 15, ...
+            'FontWeight', 'bold');
+
+        % 图例
+        hRoute = plot(ax, nan, nan, '-', 'Color', colorRoute, 'LineWidth', 2.6);
+
+        if isempty(data.mineNodes) && isempty(data.villageNodes)
+            legend(ax, [hRoute, hStart, hEnd], ...
+                {'最优路线', '起点', '终点'}, ...
+                'FontName', fontCN, 'FontSize', 9.5, ...
+                'Location', 'best', 'Box', 'on');
+        else
+            legend(ax, [hRoute, hStart, hEnd, hMine, hVillage], ...
+                {'最优路线', '起点', '终点', '矿山', '村庄'}, ...
+                'FontName', fontCN, 'FontSize', 9.5, ...
+                'Location', 'best', 'Box', 'on');
+        end
+
+        axis(ax, 'equal');
+        axis(ax, 'off');
+
+        xr = max(x) - min(x);
+        yr = max(y) - min(y);
+        xlim(ax, [min(x) - 0.12 * xr, max(x) + 0.20 * xr]);
+        ylim(ax, [min(y) - 0.12 * yr, max(y) + 0.13 * yr]);
+
+        hold(ax, 'off');
+
+        exportgraphics(fig, fullfile(caseFigureDir, 'optimal_route.png'), 'Resolution', 600);
+        close(fig);
     end
 
-end
+    function annotateMineAndSupply(ax)
+        % 矿山累计挖矿天数
+        if ~isempty(mineDays)
+            mineNodesUsed = unique(result.startRegion(mineDays));
+            for k = 1:numel(mineNodesUsed)
+                node = mineNodesUsed(k);
+                cnt = sum(result.startRegion(mineDays) == node);
 
+                text(ax, x(node) + 0.18, y(node) - 0.20, ...
+                    sprintf('挖矿 %d 天', cnt), ...
+                    'FontName', fontCN, ...
+                    'FontSize', 8.8, ...
+                    'Color', colorMine, ...
+                    'FontWeight', 'bold', ...
+                    'BackgroundColor', 'w', ...
+                    'Margin', 0.8);
+            end
+        end
 
-%% 突出路线经过节点
-
-routeNodes = unique(route, 'stable');
-
-scatter(ax, ...
-    x(routeNodes), ...
-    y(routeNodes), ...
-    64, ...
-    'o', ...
-    'MarkerFaceColor', routeColor, ...
-    'MarkerEdgeColor', 'w', ...
-    'LineWidth', 1.0);
-
-
-%% 特殊节点
-
-% 起点
-hStart = scatter(ax, ...
-    x(data.startNode), ...
-    y(data.startNode), ...
-    145, ...
-    's', ...
-    'MarkerFaceColor', startColor, ...
-    'MarkerEdgeColor', [0.10,0.34,0.19], ...
-    'LineWidth', 1.4);
-
-
-% 终点
-hEnd = scatter(ax, ...
-    x(data.endNode), ...
-    y(data.endNode), ...
-    155, ...
-    'd', ...
-    'MarkerFaceColor', endColor, ...
-    'MarkerEdgeColor', [0.46,0.10,0.08], ...
-    'LineWidth', 1.4);
-
-
-% 矿山
-hMine = gobjects(0);
-
-if ~isempty(data.mineNodes)
-
-    hMine = scatter(ax, ...
-        x(data.mineNodes), ...
-        y(data.mineNodes), ...
-        135, ...
-        '^', ...
-        'MarkerFaceColor', mineColor, ...
-        'MarkerEdgeColor', [0.52,0.29,0.04], ...
-        'LineWidth', 1.35);
-
-end
-
-
-% 村庄
-hVillage = gobjects(0);
-
-if ~isempty(data.villageNodes)
-
-    hVillage = scatter(ax, ...
-        x(data.villageNodes), ...
-        y(data.villageNodes), ...
-        135, ...
-        'p', ...
-        'MarkerFaceColor', villageColor, ...
-        'MarkerEdgeColor', [0.26,0.17,0.38], ...
-        'LineWidth', 1.35);
-
-end
-
-
-%% 节点编号
-
-for node = 1:N
-
-    if node == data.startNode
-
-        labelText = sprintf('起点  %d', node);
-        labelSize = 10.5;
-        labelWeight = 'bold';
-        labelColor = startColor;
-
-    elseif node == data.endNode
-
-        labelText = sprintf('终点  %d', node);
-        labelSize = 10.5;
-        labelWeight = 'bold';
-        labelColor = endColor;
-
-    elseif ismember(node, data.mineNodes)
-
-        labelText = sprintf('%d  矿山', node);
-        labelSize = 9.5;
-        labelWeight = 'bold';
-        labelColor = mineColor;
-
-    elseif ismember(node, data.villageNodes)
-
-        labelText = sprintf('%d  村庄', node);
-        labelSize = 9.5;
-        labelWeight = 'bold';
-        labelColor = villageColor;
-
-    elseif ismember(node, routeNodes)
-
-        labelText = num2str(node);
-        labelSize = 10;
-        labelWeight = 'bold';
-        labelColor = [0.10,0.16,0.22];
-
-    else
-
-        labelText = num2str(node);
-        labelSize = 8.2;
-        labelWeight = 'normal';
-        labelColor = [0.30,0.34,0.38];
-
+        if ~isempty(buyDays)
+            villageNodesUsed = unique(result.endRegion(buyDays));
+            for k = 1:numel(villageNodesUsed)
+                node = villageNodesUsed(k);
+                text(ax, x(node) + 0.18, y(node) + 0.18, ...
+                    '补给', ...
+                    'FontName', fontCN, ...
+                    'FontSize', 8.8, ...
+                    'Color', colorVillage, ...
+                    'FontWeight', 'bold', ...
+                    'BackgroundColor', 'w', ...
+                    'Margin', 0.8);
+            end
+        end
     end
 
-    text(ax, ...
-        x(node) + 0.08, ...
-        y(node) + 0.045, ...
-        labelText, ...
-        'FontName', fontName, ...
-        'FontSize', labelSize, ...
-        'FontWeight', labelWeight, ...
-        'Color', labelColor);
+    function drawResourceFigure()
+        fig = figure('Color', 'w', ...
+            'Units', 'centimeters', ...
+            'Position', [2, 2, 18, 10.5]);
 
-end
+        ax = axes(fig);
+        hold(ax, 'on');
 
+        plot(ax, days, waterLeft, '-o', ...
+            'Color', colorWater, ...
+            'LineWidth', 2.0, ...
+            'MarkerSize', 6.3, ...
+            'MarkerFaceColor', 'w', ...
+            'MarkerEdgeColor', colorWater);
 
-%% 标出挖矿和补给位置
+        plot(ax, days, foodLeft, '-s', ...
+            'Color', colorFood, ...
+            'LineWidth', 2.0, ...
+            'MarkerSize', 6.0, ...
+            'MarkerFaceColor', 'w', ...
+            'MarkerEdgeColor', colorFood);
 
-mineDays = find(result.mineFlag(1:arrivalDay));
+        % 补给日虚线
+        for k = 1:numel(buyDays)
+            d = buyDays(k);
+            xline(ax, d, '--', ...
+                'Color', [0.65 0.65 0.65], ...
+                'LineWidth', 0.9);
 
-if ~isempty(mineDays)
+            ymax = max([waterLeft; foodLeft]);
+            text(ax, d, ymax * 0.90, sprintf('补给\n第%d天', d), ...
+                'FontName', fontCN, ...
+                'FontSize', 8.5, ...
+                'HorizontalAlignment', 'center', ...
+                'VerticalAlignment', 'top', ...
+                'Color', [0.35 0.35 0.35], ...
+                'BackgroundColor', 'w', ...
+                'Margin', 0.5);
+        end
 
-    mineNodeUsed = unique(result.startRegion(mineDays));
+        xlabel(ax, '日期', 'FontName', fontCN, 'FontSize', 11);
+        ylabel(ax, '剩余数量（箱）', 'FontName', fontCN, 'FontSize', 11);
+        title(ax, sprintf('第%d关水和食物剩余量变化', data.caseID), ...
+            'FontName', fontCN, 'FontSize', 15, 'FontWeight', 'bold');
 
-    for k = 1:numel(mineNodeUsed)
+        legend(ax, {'水', '食物'}, ...
+            'FontName', fontCN, 'FontSize', 10, ...
+            'Location', 'northeast', 'Box', 'on');
 
-        node = mineNodeUsed(k);
+        styleAxis(ax, fontCN);
+        if arrivalDay <= 12
+            xticks(ax, 0:arrivalDay);
+        else
+            xticks(ax, 0:2:arrivalDay);
+        end
+        xlim(ax, [0, max(arrivalDay, 1)]);
+        ylim(ax, [0, max([waterLeft; foodLeft]) * 1.12 + 1]);
 
-        numDays = sum(result.startRegion(mineDays) == node);
-
-        text(ax, ...
-            x(node) + 0.20, ...
-            y(node) - 0.22, ...
-            sprintf('挖矿 %d 天', numDays), ...
-            'FontName', fontName, ...
-            'FontSize', 8.8, ...
-            'Color', mineColor, ...
-            'FontWeight', 'bold', ...
-            'BackgroundColor', 'w', ...
-            'Margin', 1);
-
+        hold(ax, 'off');
+        exportgraphics(fig, fullfile(caseFigureDir, 'resource_change.png'), 'Resolution', 600);
+        close(fig);
     end
 
-end
+    function drawCashFigure()
+        fig = figure('Color', 'w', ...
+            'Units', 'centimeters', ...
+            'Position', [2, 2, 18, 10.5]);
 
+        ax = axes(fig);
+        hold(ax, 'on');
 
-buyDays = find( ...
-    result.buyWater(1:arrivalDay) > 0 | ...
-    result.buyFood(1:arrivalDay) > 0);
+        plot(ax, days, cashLeft, '-o', ...
+            'Color', colorCash, ...
+            'LineWidth', 2.1, ...
+            'MarkerSize', 6.3, ...
+            'MarkerFaceColor', [0.94 0.98 0.95], ...
+            'MarkerEdgeColor', colorCash);
 
-if ~isempty(buyDays)
+        % 购买点
+        if ~isempty(buyDays)
+            scatter(ax, buyDays, cashLeft(buyDays+1), 62, 'o', ...
+                'MarkerFaceColor', colorVillage, ...
+                'MarkerEdgeColor', 'w', ...
+                'LineWidth', 0.9);
+        end
 
-    villageNodeUsed = unique(result.endRegion(buyDays));
+        % 挖矿点
+        if ~isempty(mineDays)
+            scatter(ax, mineDays, cashLeft(mineDays+1), 66, '^', ...
+                'MarkerFaceColor', colorMine, ...
+                'MarkerEdgeColor', 'w', ...
+                'LineWidth', 0.9);
+        end
 
-    for k = 1:numel(villageNodeUsed)
+        xlabel(ax, '日期', 'FontName', fontCN, 'FontSize', 11);
+        ylabel(ax, '剩余资金（元）', 'FontName', fontCN, 'FontSize', 11);
+        title(ax, sprintf('第%d关资金变化', data.caseID), ...
+            'FontName', fontCN, 'FontSize', 15, 'FontWeight', 'bold');
 
-        node = villageNodeUsed(k);
+        styleAxis(ax, fontCN);
+        if arrivalDay <= 12
+            xticks(ax, 0:arrivalDay);
+        else
+            xticks(ax, 0:2:arrivalDay);
+        end
+        xlim(ax, [0, max(arrivalDay, 1)]);
 
-        text(ax, ...
-            x(node) + 0.20, ...
-            y(node) + 0.22, ...
-            '补给', ...
-            'FontName', fontName, ...
-            'FontSize', 8.8, ...
-            'Color', villageColor, ...
-            'FontWeight', 'bold', ...
-            'BackgroundColor', 'w', ...
-            'Margin', 1);
+        legendEntries = {'资金'};
+        legendHandles = findobj(ax, 'Type', 'Line');
+        legendHandles = legendHandles(1);
 
+        if ~isempty(buyDays) && ~isempty(mineDays)
+            hBuy = scatter(ax, nan, nan, 62, 'o', ...
+                'MarkerFaceColor', colorVillage, ...
+                'MarkerEdgeColor', 'w', 'LineWidth', 0.9);
+            hMine = scatter(ax, nan, nan, 66, '^', ...
+                'MarkerFaceColor', colorMine, ...
+                'MarkerEdgeColor', 'w', 'LineWidth', 0.9);
+            legend([legendHandles, hBuy, hMine], {'资金', '补给点', '挖矿点'}, ...
+                'FontName', fontCN, 'FontSize', 10, ...
+                'Location', 'best', 'Box', 'on');
+        elseif ~isempty(buyDays)
+            hBuy = scatter(ax, nan, nan, 62, 'o', ...
+                'MarkerFaceColor', colorVillage, ...
+                'MarkerEdgeColor', 'w', 'LineWidth', 0.9);
+            legend([legendHandles, hBuy], {'资金', '补给点'}, ...
+                'FontName', fontCN, 'FontSize', 10, ...
+                'Location', 'best', 'Box', 'on');
+        elseif ~isempty(mineDays)
+            hMine = scatter(ax, nan, nan, 66, '^', ...
+                'MarkerFaceColor', colorMine, ...
+                'MarkerEdgeColor', 'w', 'LineWidth', 0.9);
+            legend([legendHandles, hMine], {'资金', '挖矿点'}, ...
+                'FontName', fontCN, 'FontSize', 10, ...
+                'Location', 'best', 'Box', 'on');
+        else
+            legend(ax, {'资金'}, ...
+                'FontName', fontCN, 'FontSize', 10, ...
+                'Location', 'best', 'Box', 'on');
+        end
+
+        hold(ax, 'off');
+        exportgraphics(fig, fullfile(caseFigureDir, 'money_change.png'), 'Resolution', 600);
+        close(fig);
     end
 
-end
-
-
-%% 图例
-
-hRoute = plot(ax, ...
-    nan, nan, ...
-    '-', ...
-    'Color', routeColor, ...
-    'LineWidth', 3.4);
-
-if isempty(data.mineNodes)
-
-    legend(ax, ...
-        [hRoute,hStart,hEnd], ...
-        {'最优路线','起点','终点'}, ...
-        'FontName', fontName, ...
-        'FontSize', 9, ...
-        'Location', 'best');
-
-else
-
-    legend(ax, ...
-        [hRoute,hStart,hEnd,hMine,hVillage], ...
-        {'最优路线','起点','终点','矿山','村庄'}, ...
-        'FontName', fontName, ...
-        'FontSize', 9, ...
-        'Location', 'best');
-
-end
-
-
-%% 标题及路线文字
-
-moveRouteText = strjoin(string(moveRoute), ' → ');
-
-title(ax, ...
-    { ...
-    sprintf('第%d关最优行进路线', data.caseID), ...
-    ['移动路径：', char(moveRouteText)] ...
-    }, ...
-    'FontName', fontName, ...
-    'FontSize', 15, ...
-    'FontWeight', 'bold', ...
-    'Color', [0.12,0.16,0.20]);
-
-
-axis(ax, 'equal');
-axis(ax, 'off');
-
-xRange = max(x)-min(x);
-yRange = max(y)-min(y);
-
-xlim(ax, [min(x)-0.10*xRange, max(x)+0.19*xRange]);
-ylim(ax, [min(y)-0.08*yRange, max(y)+0.11*yRange]);
-
-hold(ax, 'off');
-
-
-exportgraphics(fig, ...
-    fullfile(caseFigureDir,'optimal_route.png'), ...
-    'Resolution', 400);
-
-close(fig);
-
-
-%% 水和食物剩余量变化
-
-n = arrivalDay + 1;
-
-days = (0:arrivalDay)';
-waterLeft = round(result.water(1:n));
-foodLeft  = round(result.food(1:n));
-
-
-fig = figure( ...
-    'Color','w', ...
-    'Position',[120,100,1100,650]);
-
-ax = axes(fig);
-hold(ax,'on');
-
-
-plot(ax, ...
-    days,waterLeft, ...
-    '-o', ...
-    'Color',waterColor, ...
-    'LineWidth',2.0, ...
-    'MarkerSize',5.5, ...
-    'MarkerFaceColor','w', ...
-    'MarkerEdgeColor',waterColor);
-
-
-plot(ax, ...
-    days,foodLeft, ...
-    '-s', ...
-    'Color',foodColor, ...
-    'LineWidth',2.0, ...
-    'MarkerSize',5.2, ...
-    'MarkerFaceColor','w', ...
-    'MarkerEdgeColor',foodColor);
-
-
-% 标记补给日
-for k = 1:numel(buyDays)
-
-    d = buyDays(k);
-
-    xline(ax, ...
-        d, ...
-        '--', ...
-        'Color',[0.58,0.58,0.58], ...
-        'LineWidth',0.9);
-
-    yTop = max([waterLeft;foodLeft]);
-
-    text(ax, ...
-        d, ...
-        yTop*0.96, ...
-        sprintf('补给\n第%d天',d), ...
-        'FontName',fontName, ...
-        'FontSize',8.5, ...
-        'HorizontalAlignment','center', ...
-        'VerticalAlignment','top', ...
-        'Color',[0.38,0.38,0.38], ...
-        'BackgroundColor','w');
-
-end
-
-
-xlabel(ax,'日期', ...
-    'FontName',fontName, ...
-    'FontSize',11);
-
-ylabel(ax,'剩余数量（箱）', ...
-    'FontName',fontName, ...
-    'FontSize',11);
-
-title(ax, ...
-    sprintf('第%d关水和食物剩余量变化',data.caseID), ...
-    'FontName',fontName, ...
-    'FontSize',15, ...
-    'FontWeight','bold');
-
-
-legend(ax, ...
-    {'水','食物'}, ...
-    'FontName',fontName, ...
-    'FontSize',10, ...
-    'Location','best');
-
-
-grid(ax,'on');
-box(ax,'off');
-
-ax.GridColor = [0.82,0.84,0.86];
-ax.GridAlpha = 0.45;
-ax.LineWidth = 0.8;
-ax.FontName = fontName;
-ax.FontSize = 10;
-
-if arrivalDay <= 10
-    xticks(ax,0:arrivalDay);
-else
-    xticks(ax,0:2:arrivalDay);
-end
-
-xlim(ax,[0,max(arrivalDay,1)]);
-
-maxResource = max([waterLeft;foodLeft]);
-
-ylim(ax,[0,maxResource*1.10+1]);
-
-hold(ax,'off');
-
-
-exportgraphics(fig, ...
-    fullfile(caseFigureDir,'resource_change.png'), ...
-    'Resolution',400);
-
-close(fig);
-
-
-%% 资金变化
-
-cashLeft = round(result.cash(1:n),2);
-
-
-fig = figure( ...
-    'Color','w', ...
-    'Position',[120,100,1100,650]);
-
-ax = axes(fig);
-hold(ax,'on');
-
-
-plot(ax, ...
-    days,cashLeft, ...
-    '-o', ...
-    'Color',moneyColor, ...
-    'LineWidth',2.0, ...
-    'MarkerSize',5.5, ...
-    'MarkerFaceColor','w', ...
-    'MarkerEdgeColor',moneyColor);
-
-
-% 补给时资金通常发生下降
-for k = 1:numel(buyDays)
-
-    d = buyDays(k);
-
-    scatter(ax, ...
-        d,cashLeft(d+1), ...
-        55, ...
-        'o', ...
-        'MarkerFaceColor',villageColor, ...
-        'MarkerEdgeColor','w', ...
-        'LineWidth',0.9);
-
-end
-
-
-% 挖矿日标记
-for k = 1:numel(mineDays)
-
-    d = mineDays(k);
-
-    scatter(ax, ...
-        d,cashLeft(d+1), ...
-        38, ...
-        '^', ...
-        'MarkerFaceColor',mineColor, ...
-        'MarkerEdgeColor','w', ...
-        'LineWidth',0.7);
-
-end
-
-
-xlabel(ax,'日期', ...
-    'FontName',fontName, ...
-    'FontSize',11);
-
-ylabel(ax,'剩余资金（元）', ...
-    'FontName',fontName, ...
-    'FontSize',11);
-
-title(ax, ...
-    sprintf('第%d关资金变化',data.caseID), ...
-    'FontName',fontName, ...
-    'FontSize',15, ...
-    'FontWeight','bold');
-
-
-grid(ax,'on');
-box(ax,'off');
-
-ax.GridColor = [0.82,0.84,0.86];
-ax.GridAlpha = 0.45;
-ax.LineWidth = 0.8;
-ax.FontName = fontName;
-ax.FontSize = 10;
-
-
-if arrivalDay <= 10
-    xticks(ax,0:arrivalDay);
-else
-    xticks(ax,0:2:arrivalDay);
-end
-
-xlim(ax,[0,max(arrivalDay,1)]);
-
-hold(ax,'off');
-
-
-exportgraphics(fig, ...
-    fullfile(caseFigureDir,'money_change.png'), ...
-    'Resolution',400);
-
-close(fig);
-
+    function styleAxis(ax, fontNameUsed)
+        grid(ax, 'on');
+        box(ax, 'off');
+        ax.LineWidth = 0.9;
+        ax.FontName = fontNameUsed;
+        ax.FontSize = 10.5;
+        ax.GridColor = [0.83 0.85 0.87];
+        ax.GridAlpha = 0.50;
+        ax.XColor = [0.20 0.20 0.20];
+        ax.YColor = [0.20 0.20 0.20];
+        ax.Layer = 'top';
+    end
+
+    function [xCoord, yCoord] = getNodeCoordinates(dataStruct)
+        N = dataStruct.numNodes;
+        xCoord = zeros(N, 1);
+        yCoord = zeros(N, 1);
+
+        if dataStruct.caseID == 1
+            % 第一关：按附件地图轮廓手动固定坐标
+            coord = [
+                 1, 1.30, 10.00
+                 2, 0.45,  8.55
+                 3, 0.95,  7.20
+                 4, 2.30,  7.10
+                 5, 2.65,  5.85
+                 6, 4.05,  5.10
+                 7, 4.40,  4.10
+                 8, 4.65,  2.90
+                 9, 6.05,  2.35
+                10, 5.20,  0.35
+                11, 5.20, -0.85
+                12, 6.85, -1.45
+                13, 6.10, -0.80
+                14, 7.05, -0.55
+                15, 6.75,  0.75
+                16, 8.05,  0.90
+                17, 7.80,  2.35
+                18, 8.90,  2.35
+                19, 9.60,  3.20
+                20, 9.20,  4.25
+                21, 8.00,  6.10
+                22, 6.20,  4.45
+                23, 6.25,  6.35
+                24, 5.05,  7.00
+                25, 3.20,  8.75
+                26, 6.20,  8.75
+                27, 8.00,  8.85
+                ];
+
+            xCoord(coord(:,1)) = coord(:,2);
+            yCoord(coord(:,1)) = coord(:,3);
+
+        else
+            % 第二关：六边形网格布局
+            for node = 1:N
+                row = ceil(node / 8);
+                col = mod(node - 1, 8) + 1;
+
+                xCoord(node) = col + 0.5 * mod(row - 1, 2);
+                yCoord(node) = (8 - row) * 0.90;
+            end
+        end
+    end
 end
