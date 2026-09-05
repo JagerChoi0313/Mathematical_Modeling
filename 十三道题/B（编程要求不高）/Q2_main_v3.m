@@ -1,24 +1,7 @@
-%% CUMCM 2021 B题 第二问
-% 多元二次响应面模型 + 层级约简 + LOOCV + 因素综合影响度
-%
-% 研究目标：
-%   探讨催化剂组合及温度对
-%   (1) 乙醇转化率
-%   (2) C4烯烃选择性
-%   的影响大小、方向、非线性与交互作用。
-%
-% 使用方法：
-% 1. 将本文件、fit_response_surface_q2_v2.m、plot_q2_results.m
-%    与附件1 Excel 放在同一个文件夹；
-% 2. Excel 文件名可为“附件1.xlsx”或“附件1(日期...).xlsx”，
-%    程序会自动寻找“附件1*.xlsx”；
-% 3. 在 MATLAB 中将“当前文件夹”切换到该目录；
-% 4. 运行 Q2_main_v3.m。
-%
-% 不要求 Statistics and Machine Learning Toolbox：
-% t/F 检验、LOOCV、VIF 等均由程序自行计算。
 
-clear; clc; close all;
+clear; 
+clc; 
+close all;
 clear functions;
 rehash;
 
@@ -97,13 +80,13 @@ desc       = filldown_string(desc);
 %% Step 2  从催化剂描述中自动提取数学模型所需因素
 n0 = height(T);
 
-coLoad    = nan(n0,1);   % x1：Co负载量 wt%
-coMass    = nan(n0,1);   % Co/SiO2质量 mg（诊断用）
-hapMass   = nan(n0,1);   % HAP质量 mg（诊断用）
-loadRatio = nan(n0,1);   % x2：Co/SiO2在Co/SiO2+HAP中的质量占比
-ethanol   = nan(n0,1);   % x3：乙醇浓度 ml/min
-totalMass = nan(n0,1);   % 总催化剂装料量，作为可选控制变量
-quartzFlag = false(n0,1);% 是否为石英砂/无HAP特殊组合
+coLoad    = nan(n0,1);   
+coMass    = nan(n0,1);   
+hapMass   = nan(n0,1);  
+loadRatio = nan(n0,1);   
+ethanol   = nan(n0,1);  
+totalMass = nan(n0,1);  
+quartzFlag = false(n0,1);
 
 for i = 1:n0
     [coLoad(i), coMass(i), hapMass(i), loadRatio(i), ...
@@ -111,11 +94,10 @@ for i = 1:n0
         parse_catalyst_description(desc(i));
 end
 
-% x4：温度
-% D：装料方式虚拟变量；A组=方式I=0，B组=方式II=1
+
 D = double(startsWith(strtrim(catalystID), "B"));
 
-% 删除不能用于本问建模的缺失记录
+
 valid = ~ismissing(catalystID) & ~ismissing(desc) & ...
         isfinite(coLoad) & isfinite(loadRatio) & ...
         isfinite(ethanol) & isfinite(temp) & ...
@@ -166,7 +148,7 @@ assert(all(sigma > 0), '存在没有变化的连续因素，无法标准化。')
 
 Z = (Xraw - mu) ./ sigma;
 
-% 附件中存在总装料量不同、但题面核心因素相同或接近的实验。
+
 % 为避免这部分变化完全进入残差，程序额外建立“总装料量控制模型”做敏感性比较。
 massMean = mean(totalMass);
 massStd  = std(totalMass, 0);
@@ -190,17 +172,6 @@ fprintf(['说明：主模型始终研究四个题面核心因素。\n' ...
          '且总装料量不参与四个核心因素的影响度排名。\n\n']);
 
 %% Step 4  分别建立“核心模型”和“增加总装料量控制项的模型”
-% 核心模型：
-% Y = 主效应 + 二次项 + 两两交互 + 装料方式D
-%
-% 扩展控制模型：
-% 在核心模型基础上增加标准化总装料量 M
-%
-% 两种模型内部均：
-% 1) 自动识别不可独立估计的高阶项；
-% 2) 保留四个核心主效应；
-% 3) 按层级原则约简二次项和交互项；
-% 4) 综合p值、调整R2和LOOCV进行约简。
 
 coreConv = fit_response_surface_q2_v2( ...
     Z, D, ZM, yConv, "乙醇转化率", false, factorNames);
@@ -215,10 +186,7 @@ massC4 = fit_response_surface_q2_v2( ...
     Z, D, ZM, yC4, "C4烯烃选择性", true, factorNames);
 
 %% Step 5  控制模型选择
-% 若加入总装料量后：
-%   LOOCV-RMSE至少降低5%，且调整R2没有明显下降，
-% 则采用含总装料量控制项的模型；
-% 否则采用题面四因素核心模型。
+
 [finalConv, convUseMass, convReason] = ...
     choose_control_model(coreConv, massConv);
 
@@ -318,7 +286,6 @@ fprintf('  2. Conv_Importance\n');
 fprintf('  3. C4_Importance\n');
 fprintf('  4. Conv_Coefficients / C4_Coefficients\n');
 
-%% ==================== 局部辅助函数 ====================
 
 function s = filldown_string(s)
     s = string(s);
@@ -395,8 +362,7 @@ function [coLoading, coMass, hapMass, ratio, ethanol, totalMass, quartzFlag] = .
 end
 
 function [chosen, useMass, reason] = choose_control_model(coreModel, massModel)
-    % 总装料量控制项必须确实保留在最终模型中，
-    % 且LOOCV至少改善5%，调整R2不明显恶化。
+  
     massRetained = any(strcmp(string(massModel.coefTable.Term), "M_total"));
 
     cvImprove = (coreModel.stats.LOOCV_RMSE - massModel.stats.LOOCV_RMSE) ...
